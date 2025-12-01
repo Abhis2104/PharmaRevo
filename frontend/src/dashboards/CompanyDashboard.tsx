@@ -120,6 +120,7 @@ const CompanyDashboard = () => {
 
   const tabs = [
     { id: "batch", label: "🏭 Add Batch Stock", icon: "🏭" },
+    { id: "mybatches", label: "📦 My Batches", icon: "📦" },
     { id: "redistribution", label: "🔁 Track Redistribution", icon: "🔁" },
     { id: "disposal", label: "♻️ Disposal Request", icon: "♻️" },
     { id: "csr", label: "📈 CSR Analytics", icon: "📈" },
@@ -306,10 +307,77 @@ const CompanyDashboard = () => {
     </div>
   );
 
+  const renderMyBatches = () => (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-6 text-white">
+        <h3 className="text-2xl font-bold mb-2">My Submitted Batches</h3>
+        <p className="text-purple-100">Track the status of your submitted medicine batches</p>
+      </div>
+      
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
+        <div className="space-y-4">
+          {myBatches.map(batch => (
+            <div key={batch.id} className="border-2 border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-300">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h4 className="font-bold text-gray-800 text-lg">{batch.medicineName}</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-3 text-sm">
+                    <div>
+                      <span className="text-gray-500">Batch Number:</span>
+                      <p className="font-semibold">{batch.batchNumber}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Quantity:</span>
+                      <p className="font-semibold">{batch.quantity}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Expiry Date:</span>
+                      <p className="font-semibold">{batch.expiryDate}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Reason:</span>
+                      <p className="font-semibold capitalize">{batch.reason}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Submitted:</span>
+                      <p className="font-semibold">{new Date(batch.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Contact:</span>
+                      <p className="font-semibold">{batch.contactNumber}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                    batch.status === "Pending" ? "bg-yellow-100 text-yellow-800" :
+                    batch.status === "Approved" ? "bg-green-100 text-green-800" :
+                    "bg-red-100 text-red-800"
+                  }`}>
+                    {batch.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {myBatches.length === 0 && (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📦</div>
+              <p className="text-gray-600 text-lg">No batches submitted yet.</p>
+              <p className="text-gray-500">Submit your first batch using the "Add Batch Stock" tab.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case "batch":
         return renderBatchStock();
+      case "mybatches":
+        return renderMyBatches();
       case "redistribution":
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">

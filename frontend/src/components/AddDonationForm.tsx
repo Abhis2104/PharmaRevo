@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, auth, storage } from "../firebase";
+import React, { useState, useEffect } from "react";
+import { collection, addDoc } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
+import { db, auth } from "../firebase";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary";
 
 interface AddDonationFormProps {
   onDonationAdded?: () => void;
@@ -20,11 +21,20 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
   const [landmark, setLandmark] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!auth.currentUser) {
+    // Validation checks
+    if (!currentUser) {
       alert("Please sign in first");
       return;
     }
@@ -34,13 +44,11 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
       return;
     }
 
-    // Validate contact number
     if (!/^[0-9]{10}$/.test(contactNumber)) {
       alert("Please enter a valid 10-digit contact number");
       return;
     }
 
-    // Validate image if provided
     if (image) {
       const maxSize = 5 * 1024 * 1024; // 5MB
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
@@ -57,79 +65,60 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
     }
 
     setLoading(true);
-    console.log("Starting donation submission...");
-    console.log("Current user:", auth.currentUser.uid);
     
     try {
       let imageUrl = "";
       
-      // Upload image first if provided
+      // Upload image to Cloudinary if provided
       if (image) {
         try {
-          console.log("Uploading image...", image.name, image.size, image.type);
+          console.log("Uploading image to Cloudinary...");
+          imageUrl = await uploadToCloudinary(image);
+          console.log("Image uploaded successfully:", imageUrl);
+        } catch (uploadError) {
+          console.error("Cloudinary upload failed:", uploadError);
           
-          // Create unique filename with user ID
-          const timestamp = new Date().getTime();
-          const fileExtension = image.name.split('.').pop() || 'jpg';
-          const fileName = `${auth.currentUser.uid}_${timestamp}.${fileExtension}`;
-          const imageRef = ref(storage, `donations/${fileName}`);
+          const continueWithoutImage = window.confirm(
+            `Image upload failed: ${uploadError.message}\n\nWould you like to continue submitting the donation without the image?`
+          );
           
-          console.log("Uploading to path:", `donations/${fileName}`);
-          
-          // Upload with metadata
-          const metadata = {
-            contentType: image.type,
-            customMetadata: {
-              'uploadedBy': auth.currentUser.uid,
-              'originalName': image.name
-            }
-          };
-          
-          const uploadResult = await uploadBytes(imageRef, image, metadata);
-          console.log("Upload completed:", uploadResult);
-          
-          imageUrl = await getDownloadURL(uploadResult.ref);
-          console.log("Download URL obtained:", imageUrl);
-        } catch (imageError: any) {
-          console.error("Detailed image upload error:", {
-            message: imageError.message,
-            code: imageError.code,
-            details: imageError
-          });
-          
-          // Check specific error types
-          if (imageError.code === 'storage/unauthorized') {
-            alert("Storage permission denied. Please check Firebase Storage rules.");
-          } else if (imageError.code === 'storage/quota-exceeded') {
-            alert("Storage quota exceeded. Please try again later.");
-          } else {
-            alert(`Image upload failed: ${imageError.message}. Proceeding without image.`);
+          if (!continueWithoutImage) {
+            setLoading(false);
+            return;
           }
+          
+          imageUrl = ""; // Continue without image
         }
       }
       
-      // Save donation with or without image
+      // Prepare donation data
       const donationData = {
         medicineName: medicineName.trim(),
         expiryDate: expiryDate,
-        quantity: Number(quantity),
-        description: description.trim() || "",
+        quantity: parseInt(quantity, 10),
+        description: description.trim(),
         imageUrl: imageUrl,
-        pickupAddress: pickupAddress.trim(),
-        city: city.trim(),
-        pinCode: pinCode.trim(),
-        landmark: landmark.trim(),
+        pickupAddress: {
+          address: pickupAddress.trim(),
+          city: city.trim(),
+          pinCode: pinCode.trim(),
+          landmark: landmark.trim()
+        },
         contactNumber: contactNumber.trim(),
-        donorId: auth.currentUser.uid,
+        donorId: currentUser.uid,
         status: "Pending",
-        createdAt: new Date().getTime(),
+        deliveryStatus: "pending_pickup",
+        assignedVolunteerId: null,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        source: "individual"
       };
       
-      console.log("Saving donation...");
+      console.log("Saving donation to Firestore...");
       const docRef = await addDoc(collection(db, "donations"), donationData);
-      console.log("SUCCESS! Donation saved with ID:", docRef.id);
+      console.log("Donation saved successfully with ID:", docRef.id);
 
-      // Reset form
+      // Reset form completely
       setMedicineName("");
       setExpiryDate("");
       setQuantity("");
@@ -142,20 +131,44 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
       setLandmark("");
       setContactNumber("");
       
-      // Reset file input
+      // Reset file input element
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-      
-      alert("Donation added successfully!");
-      
-      // Force refresh
-      if (onDonationAdded) {
-        console.log("Triggering refresh...");
-        onDonationAdded();
+      if (fileInput) {
+        fileInput.value = '';
       }
+      
+      alert("✅ Donation submitted successfully! It will be reviewed by our admin team.");
+      
+      // Trigger refresh callback
+      if (onDonationAdded) {
+        setTimeout(() => onDonationAdded(), 100);
+      }
+      
     } catch (error: any) {
-      console.error("ERROR saving donation:", error);
-      alert(`Failed: ${error.message}`);
+      console.error("Donation submission error:", error);
+      
+      let errorMessage = "Failed to submit donation. ";
+      
+      // Handle Firestore errors
+      if (error.code) {
+        switch (error.code) {
+          case 'permission-denied':
+            errorMessage += "Permission denied. Please check your authentication.";
+            break;
+          case 'unavailable':
+            errorMessage += "Service temporarily unavailable. Please try again.";
+            break;
+          case 'deadline-exceeded':
+            errorMessage += "Request timeout. Please check your internet connection.";
+            break;
+          default:
+            errorMessage += error.message || "Unknown error occurred.";
+        }
+      } else {
+        errorMessage += error.message || "Please try again later.";
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -242,8 +255,8 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
           }}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
         />
-        <p className="text-xs text-gray-500 mt-1">
-          Supported formats: JPEG, PNG, WebP (Max 5MB)
+        <p className="text-xs text-green-600 mt-1">
+          ✅ Free image hosting via Cloudinary (Max 5MB)
         </p>
         
         {imagePreview && (

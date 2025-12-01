@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, deleteDoc, addDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import DeliveryManager from "../components/DeliveryManager";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -19,6 +20,8 @@ const AdminDashboard = () => {
   const [showPharmacyModal, setShowPharmacyModal] = useState(false);
   const [selectedCompanyBatch, setSelectedCompanyBatch] = useState<any>(null);
   const [showCompanyModal, setShowCompanyModal] = useState(false);
+  const [sortBy, setSortBy] = useState("recent");
+  const [approvedDonationsTab, setApprovedDonationsTab] = useState("donor");
 
   useEffect(() => {
     if (!localStorage.getItem("adminLoggedIn")) {
@@ -156,6 +159,8 @@ const AdminDashboard = () => {
     { id: "verification", label: "💊 Medicine Verification", icon: "💊" },
     { id: "pharmacy", label: "🏪 Pharmacy Verification", icon: "🏪" },
     { id: "company", label: "🏢 Company Verification", icon: "🏢" },
+    { id: "approved-donations", label: "✅ Approved Donations", icon: "✅" },
+    { id: "logistics", label: "🚚 Logistics Management", icon: "🚚" },
     { id: "ngo-requests", label: "🏥 NGO Requests", icon: "🏥" },
     { id: "sales", label: "💰 Approved Sales", icon: "💰" },
     { id: "inventory", label: "📦 Inventory Control", icon: "📦" },
@@ -241,19 +246,19 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Pickup Address</label>
-                <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedDonation.pickupAddress || selectedDonation.address || 'Not provided'}</p>
+                <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedDonation.pickupAddress?.address || selectedDonation.pickupAddress || selectedDonation.address || 'Not provided'}</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">City</label>
-                <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedDonation.pickupCity || selectedDonation.city || 'Not provided'}</p>
+                <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedDonation.pickupAddress?.city || selectedDonation.pickupCity || selectedDonation.city || 'Not provided'}</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Pin Code</label>
-                <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedDonation.pickupPinCode || selectedDonation.pinCode || 'Not provided'}</p>
+                <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedDonation.pickupAddress?.pinCode || selectedDonation.pickupPinCode || selectedDonation.pinCode || 'Not provided'}</p>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Landmark</label>
-                <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedDonation.pickupLandmark || selectedDonation.landmark || 'Not provided'}</p>
+                <p className="text-gray-900 bg-gray-50 p-2 rounded">{selectedDonation.pickupAddress?.landmark || selectedDonation.pickupLandmark || selectedDonation.landmark || 'Not provided'}</p>
               </div>
             </div>
             
@@ -531,7 +536,7 @@ const AdminDashboard = () => {
               <div className="flex space-x-4 pt-4 border-t">
                 <button
                   onClick={() => {
-                    // Add company batch approval function here
+                    updateCompanyBatchStatus(selectedCompanyBatch.id, "Approved", selectedCompanyBatch);
                     closeCompanyModal();
                   }}
                   className="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
@@ -540,7 +545,7 @@ const AdminDashboard = () => {
                 </button>
                 <button
                   onClick={() => {
-                    // Add company batch rejection function here
+                    updateCompanyBatchStatus(selectedCompanyBatch.id, "Rejected", selectedCompanyBatch);
                     closeCompanyModal();
                   }}
                   className="flex-1 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
@@ -658,9 +663,34 @@ const AdminDashboard = () => {
     </div>
   );
 
+  const getSortedData = (data: any[], sortType: string) => {
+    const sorted = [...data];
+    switch (sortType) {
+      case "recent":
+        return sorted.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      case "alphabetical":
+        return sorted.sort((a, b) => (a.medicineName || "").localeCompare(b.medicineName || ""));
+      case "date":
+        return sorted.sort((a, b) => new Date(a.expiryDate || 0).getTime() - new Date(b.expiryDate || 0).getTime());
+      default:
+        return sorted;
+    }
+  };
+
   const renderMedicineVerification = () => (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-      <h3 className="text-xl font-bold mb-6">Medicine Verification</h3>
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold">Medicine Verification</h3>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        >
+          <option value="recent">📅 Most Recent</option>
+          <option value="alphabetical">🔤 Alphabetical</option>
+          <option value="date">📆 By Expiry Date</option>
+        </select>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -673,11 +703,11 @@ const AdminDashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {donations.map(donation => (
+            {getSortedData(donations, sortBy).map(donation => (
               <tr key={donation.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="p-4 font-medium">{donation.medicineName}</td>
                 <td className="p-4">{donation.expiryDate}</td>
-                <td className="p-4">{donation.pickupAddress || donation.address || 'Not provided'}</td>
+                <td className="p-4">{donation.pickupAddress?.address || donation.pickupAddress || donation.address || 'Not provided'}</td>
                 <td className="p-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
                     donation.status === "Pending" ? "bg-yellow-100 text-yellow-800" :
@@ -723,7 +753,18 @@ const AdminDashboard = () => {
 
   const renderPharmacyVerification = () => (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-      <h3 className="text-xl font-bold mb-6">Pharmacy Stock Verification</h3>
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold">Pharmacy Stock Verification</h3>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        >
+          <option value="recent">📅 Most Recent</option>
+          <option value="alphabetical">🔤 Alphabetical</option>
+          <option value="date">📆 By Expiry Date</option>
+        </select>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -736,7 +777,7 @@ const AdminDashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {pharmacyStock.map(stock => (
+            {getSortedData(pharmacyStock, sortBy).map(stock => (
               <tr key={stock.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="p-4 font-medium">{stock.medicineName}</td>
                 <td className="p-4">{stock.quantity}</td>
@@ -792,7 +833,18 @@ const AdminDashboard = () => {
 
   const renderCompanyVerification = () => (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-      <h3 className="text-xl font-bold mb-6">Company Batch Verification</h3>
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold">Company Batch Verification</h3>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        >
+          <option value="recent">📅 Most Recent</option>
+          <option value="alphabetical">🔤 Alphabetical</option>
+          <option value="date">📆 By Expiry Date</option>
+        </select>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -805,7 +857,7 @@ const AdminDashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {companyBatches.map(batch => (
+            {getSortedData(companyBatches, sortBy).map(batch => (
               <tr key={batch.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="p-4 font-medium">{batch.medicineName}</td>
                 <td className="p-4">{batch.batchNumber}</td>
@@ -829,10 +881,16 @@ const AdminDashboard = () => {
                     </button>
                     {batch.status === "Pending" && (
                       <>
-                        <button className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                        <button 
+                          onClick={() => updateCompanyBatchStatus(batch.id, "Approved", batch)}
+                          className="bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition-colors text-sm"
+                        >
                           ✅ Approve
                         </button>
-                        <button className="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                        <button 
+                          onClick={() => updateCompanyBatchStatus(batch.id, "Rejected", batch)}
+                          className="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition-colors text-sm"
+                        >
                           ❌ Reject
                         </button>
                       </>
@@ -889,9 +947,57 @@ const AdminDashboard = () => {
     }
   };
 
+  const updateCompanyBatchStatus = async (batchId: string, status: string, batchItem: any) => {
+    try {
+      await updateDoc(doc(db, "company_batches", batchId), { status });
+      
+      if (status === "Approved") {
+        await addDoc(collection(db, "donations"), {
+          medicineName: batchItem.medicineName,
+          expiryDate: batchItem.expiryDate,
+          quantity: batchItem.quantity,
+          description: `Company batch donation - ${batchItem.reason}`,
+          imageUrl: "",
+          pickupAddress: {
+            address: batchItem.pickupAddress,
+            city: batchItem.city,
+            pinCode: batchItem.pinCode,
+            landmark: batchItem.landmark
+          },
+          contactNumber: batchItem.contactNumber,
+          donorId: batchItem.companyId,
+          status: "Approved",
+          deliveryStatus: "pending_pickup",
+          assignedVolunteerId: null,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          source: "company",
+          batchNumber: batchItem.batchNumber,
+          manufacturingDate: batchItem.manufacturingDate
+        });
+      }
+      
+      fetchData();
+      alert(`Company batch ${status.toLowerCase()} successfully!`);
+    } catch (error) {
+      console.error("Error updating company batch:", error);
+      alert("Error updating company batch status");
+    }
+  };
+
   const renderNgoRequests = () => (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-      <h3 className="text-xl font-bold mb-6">🏥 NGO/Hospital Medicine Requests</h3>
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold">🏥 NGO/Hospital Medicine Requests</h3>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        >
+          <option value="recent">📅 Most Recent</option>
+          <option value="alphabetical">🔤 By Organization</option>
+        </select>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -904,7 +1010,7 @@ const AdminDashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {ngoRequests.map(request => (
+            {getSortedData(ngoRequests.map(req => ({...req, medicineName: req.organizationName})), sortBy).map(request => (
               <tr key={request.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="p-4">
                   <div>
@@ -1033,6 +1139,142 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+
+  const renderApprovedDonations = () => {
+    const approvedDonations = donations.filter(d => d.status === "Approved");
+    const donorDonations = approvedDonations.filter(d => !d.source || d.source === "individual");
+    const pharmacyDonations = approvedDonations.filter(d => d.source === "pharmacy");
+    const companyDonations = approvedDonations.filter(d => d.source === "company");
+    
+    const getCurrentData = () => {
+      switch (approvedDonationsTab) {
+        case "donor": return donorDonations;
+        case "pharmacy": return pharmacyDonations;
+        case "company": return companyDonations;
+        default: return donorDonations;
+      }
+    };
+    
+    return (
+      <div className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">Donor Donations</h3>
+                <p className="text-3xl font-bold">{donorDonations.length}</p>
+              </div>
+              <div className="text-4xl opacity-80">🤝</div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">Pharmacy Donations</h3>
+                <p className="text-3xl font-bold">{pharmacyDonations.length}</p>
+              </div>
+              <div className="text-4xl opacity-80">🏪</div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold">Company Donations</h3>
+                <p className="text-3xl font-bold">{companyDonations.length}</p>
+              </div>
+              <div className="text-4xl opacity-80">🏢</div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Sub-tabs */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-2 border border-white/20 shadow-lg">
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setApprovedDonationsTab("donor")}
+              className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                approvedDonationsTab === "donor"
+                  ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              🤝 Donor ({donorDonations.length})
+            </button>
+            <button
+              onClick={() => setApprovedDonationsTab("pharmacy")}
+              className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                approvedDonationsTab === "pharmacy"
+                  ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              🏪 Pharmacy ({pharmacyDonations.length})
+            </button>
+            <button
+              onClick={() => setApprovedDonationsTab("company")}
+              className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                approvedDonationsTab === "company"
+                  ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
+                  : "text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              🏢 Company ({companyDonations.length})
+            </button>
+          </div>
+        </div>
+        
+        {/* Donations Grid */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
+          <h3 className="text-xl font-bold mb-6">
+            {approvedDonationsTab === "donor" && "🤝 Approved Donor Donations"}
+            {approvedDonationsTab === "pharmacy" && "🏪 Approved Pharmacy Donations"}
+            {approvedDonationsTab === "company" && "🏢 Approved Company Donations"}
+          </h3>
+          
+          {getCurrentData().length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">
+                {approvedDonationsTab === "donor" && "🤝"}
+                {approvedDonationsTab === "pharmacy" && "🏪"}
+                {approvedDonationsTab === "company" && "🏢"}
+              </div>
+              <p className="text-gray-600 text-lg">No approved donations from {approvedDonationsTab}s yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {getCurrentData().map(donation => (
+                <div key={donation.id} className="border-2 border-gray-100 rounded-xl p-4 hover:shadow-lg transition-all duration-300 bg-white">
+                  {donation.imageUrl && (
+                    <img
+                      src={donation.imageUrl}
+                      alt={donation.medicineName}
+                      className="w-full h-32 object-cover rounded-lg mb-3"
+                    />
+                  )}
+                  <h4 className="font-bold text-gray-800 mb-2">{donation.medicineName}</h4>
+                  <p className="text-gray-600 text-sm mb-1">Expiry: {donation.expiryDate}</p>
+                  <p className="text-gray-600 text-sm mb-1">Quantity: {donation.quantity}</p>
+                  <p className="text-gray-600 text-sm mb-3">City: {donation.pickupAddress?.city || donation.pickupCity || donation.city}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                      ✅ Available
+                    </span>
+                    <button 
+                      onClick={() => openDetailModal(donation)}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 py-1 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderAnalytics = () => (
     <div className="space-y-6">
@@ -1187,6 +1429,8 @@ const AdminDashboard = () => {
             {activeTab === "verification" && renderMedicineVerification()}
             {activeTab === "pharmacy" && renderPharmacyVerification()}
             {activeTab === "company" && renderCompanyVerification()}
+            {activeTab === "approved-donations" && renderApprovedDonations()}
+            {activeTab === "logistics" && <DeliveryManager />}
             {activeTab === "ngo-requests" && renderNgoRequests()}
             {activeTab === "sales" && renderApprovedSales()}
             {activeTab === "inventory" && renderInventoryControl()}

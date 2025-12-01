@@ -9,9 +9,8 @@ const AdminLogin: React.FC = () => {
 
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);                  //Login with: PharmaRevoAdmin / Pharma@123
+    setLoading(true);
 
-    // Check admin credentials
     if (username === "PharmaRevoAdmin" && password === "Pharma@123") {
       localStorage.setItem("adminLoggedIn", "true");
       navigate("/admin-dashboard");

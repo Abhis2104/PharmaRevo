@@ -8,7 +8,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDmIJFDjrnSXs0FXKL-9VGBlZ2NdNMkMfA",
   authDomain: "pharmarevo-53c74.firebaseapp.com",
   projectId: "pharmarevo-53c74",
-  storageBucket: "pharmarevo-53c74.firebasestorage.app",
+  storageBucket: "pharmarevo-53c74.appspot.com",
   messagingSenderId: "781901846437",
   appId: "1:781901846437:web:b6c67d340deefe801e3a4c",
   measurementId: "G-10RMXXFS6X"
@@ -19,6 +19,6 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 const db = getFirestore(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
+const storage = getStorage(app, "gs://pharmarevo-53c74.appspot.com");
 
 export { db, auth, storage };

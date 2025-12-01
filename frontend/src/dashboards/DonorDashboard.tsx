@@ -1,14 +1,47 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 import AddDonationForm from "../components/AddDonationForm";
 import DonationList from "../components/DonationList";
 
 const DonorDashboard = () => {
-  console.log("DonorDashboard component loaded");
+  const navigate = useNavigate();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        navigate('/signin');
+      }
+      setLoading(false);
+    });
+    
+    return () => unsubscribe();
+  }, [navigate]);
   
   const handleDonationAdded = () => {
     setRefreshTrigger(prev => prev + 1);
   };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return null;
+  }
   
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
@@ -36,9 +69,16 @@ const DonorDashboard = () => {
           </div>
           
           <button
-            onClick={() => {
-              localStorage.clear();
-              window.location.href = "/";
+            onClick={async () => {
+              try {
+                await auth.signOut();
+                localStorage.clear();
+                navigate('/');
+              } catch (error) {
+                console.error('Logout error:', error);
+                localStorage.clear();
+                navigate('/');
+              }
             }}
             className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-6 py-3 rounded-full hover:shadow-lg transform hover:scale-105 transition-all duration-300 font-medium"
           >
