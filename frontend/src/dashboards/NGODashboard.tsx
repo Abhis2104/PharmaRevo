@@ -7,6 +7,7 @@ const NGODashboard = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [availableMedicines, setAvailableMedicines] = useState<any[]>([]);
   const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [myPassports, setMyPassports] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,11 +47,14 @@ const NGODashboard = () => {
           where("ngoId", "==", auth.currentUser.uid)
         );
         const requestsSnapshot = await getDocs(requestsQuery);
-        const requestsData = requestsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setMyRequests(requestsData);
+        setMyRequests(requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+        const passportsQuery = query(
+          collection(db, "medicine_passports"),
+          where("ngoId", "==", auth.currentUser.uid)
+        );
+        const passportsSnapshot = await getDocs(passportsQuery);
+        setMyPassports(passportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -301,6 +305,7 @@ const NGODashboard = () => {
     { id: "cart", label: "🛒 Request Cart", icon: "🛒" },
     { id: "status", label: "✅ Request Status", icon: "✅" },
     { id: "passport", label: "🔏 Scan Passport", icon: "🔏" },
+    { id: "mypassports", label: "🔒 My Passports", icon: "🔒" },
     { id: "reports", label: "🧾 Usage Reports", icon: "🧾" },
     { id: "support", label: "💬 Support", icon: "💬" }
   ];
@@ -467,6 +472,100 @@ const NGODashboard = () => {
             ngoName={profileData.organizationName || "NGO"}
             ngoId={auth.currentUser?.uid || ""}
           />
+        );
+      case "mypassports":
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-gray-700 to-gray-900 rounded-2xl p-6 text-white">
+              <h3 className="text-2xl font-bold mb-1">🔒 My Passport History</h3>
+              <p className="text-gray-300">All medicine passports confirmed and locked by your organization</p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: "Distributed", status: "Distributed", color: "from-purple-500 to-indigo-500", icon: "📦" },
+                { label: "Completed", status: "Completed", color: "from-green-500 to-emerald-500", icon: "🎉" },
+                { label: "Disposed", status: "Disposed", color: "from-red-500 to-pink-500", icon: "🗑️" }
+              ].map(s => (
+                <div key={s.status} className={`bg-gradient-to-r ${s.color} rounded-2xl p-4 text-white text-center`}>
+                  <div className="text-2xl mb-1">{s.icon}</div>
+                  <div className="text-2xl font-bold">{myPassports.filter(p => p.status === s.status).length}</div>
+                  <div className="text-sm opacity-90">{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {myPassports.length === 0 ? (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 border border-white/20 shadow-lg text-center">
+                <div className="text-6xl mb-4">🔏</div>
+                <p className="text-gray-600 text-lg">No passports yet.</p>
+                <p className="text-gray-500 text-sm mt-1">Passports you confirm via the scanner will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {myPassports.map(passport => (
+                  <div key={passport.id} className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-white/20 shadow-lg">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-bold text-gray-800 text-lg">{passport.medicineName}</h4>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            passport.status === "Completed" ? "bg-green-100 text-green-800" :
+                            passport.status === "Disposed" ? "bg-red-100 text-red-800" :
+                            "bg-purple-100 text-purple-800"
+                          }`}>
+                            {passport.status === "Completed" ? "🎉" : passport.status === "Disposed" ? "🗑️" : "📦"} {passport.status}
+                          </span>
+                          {(passport.status === "Completed" || passport.status === "Disposed") && (
+                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-semibold">🔒 Locked</span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600">
+                          <p>📦 Qty: <span className="font-semibold">{passport.quantity}</span></p>
+                          <p>📅 Expiry: <span className="font-semibold">{passport.expiryDate}</span></p>
+                          <p>🏷️ Source: <span className="font-semibold capitalize">{passport.source || "individual"}</span></p>
+                          <p>🔑 ID: <span className="font-mono text-xs">{passport.passportId}</span></p>
+                        </div>
+                        {passport.usageDetails && (
+                          <div className="mt-3 p-3 bg-green-50 rounded-xl border border-green-200">
+                            <p className="text-xs font-semibold text-green-700 mb-1">📋 Usage Record</p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-1 text-xs text-green-700">
+                              <p>Qty Used: <span className="font-semibold">{passport.usageDetails.quantityUsed}</span></p>
+                              <p>Date: <span className="font-semibold">{passport.usageDetails.date}</span></p>
+                              <p>Purpose: <span className="font-semibold">{passport.usageDetails.purpose}</span></p>
+                              {passport.usageDetails.notes && <p className="col-span-full">Notes: {passport.usageDetails.notes}</p>}
+                            </div>
+                          </div>
+                        )}
+                        {/* Timeline */}
+                        {passport.timeline?.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-xs font-semibold text-gray-500 mb-2">JOURNEY</p>
+                            <div className="flex flex-wrap gap-2">
+                              {passport.timeline.map((event: any, i: number) => (
+                                <div key={i} className="flex items-center gap-1 text-xs text-gray-500">
+                                  <div className="w-1.5 h-1.5 bg-blue-400 rounded-full"></div>
+                                  <span>{event.action}</span>
+                                  {i < passport.timeline.length - 1 && <span className="text-gray-300">→</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {(passport.status === "Completed" || passport.status === "Disposed") && (
+                        <div className="flex-shrink-0 text-center">
+                          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-2xl">🔒</div>
+                          <p className="text-xs text-gray-500 mt-1">Sealed</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         );
       case "reports":
         return (

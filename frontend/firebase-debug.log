@@ -250,3 +250,205 @@
 [debug] [2026-03-15T14:43:01.011Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases versionName=projects%2F781901846437%2Fsites%2Fpharmarevo-53c74%2Fversions%2Ffea2bc52b5a8d4a9
 [debug] [2026-03-15T14:43:01.011Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases {}
 [debug] [2026-03-15T14:43:01.783Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases 200
+[debug] [2026-03-15T14:49:27.476Z] ----------------------------------------------------------------------
+[debug] [2026-03-15T14:49:27.479Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\ASUS\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2026-03-15T14:49:27.480Z] CLI Version:   14.24.1
+[debug] [2026-03-15T14:49:27.480Z] Platform:      win32
+[debug] [2026-03-15T14:49:27.480Z] Node Version:  v22.20.0
+[debug] [2026-03-15T14:49:27.481Z] Time:          Sun Mar 15 2026 20:19:27 GMT+0530 (India Standard Time)
+[debug] [2026-03-15T14:49:27.481Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-15T14:49:27.748Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-15T14:49:27.749Z] > authorizing via signed-in user (abhishekrchaudhari2104@gmail.com)
+[debug] [2026-03-15T14:49:27.749Z] [iam] checking project pharmarevo-53c74 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-03-15T14:49:27.751Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:27.751Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:27.753Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions [none]
+[debug] [2026-03-15T14:49:27.754Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions x-goog-quota-user=projects/pharmarevo-53c74
+[debug] [2026-03-15T14:49:27.754Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-03-15T14:49:29.258Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions 200
+[debug] [2026-03-15T14:49:29.259Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-03-15T14:49:29.260Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:29.260Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:29.261Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/pharmarevo-53c74 [none]
+[debug] [2026-03-15T14:49:29.773Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/pharmarevo-53c74 200
+[debug] [2026-03-15T14:49:29.773Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/pharmarevo-53c74 {"projectId":"pharmarevo-53c74","projectNumber":"781901846437","displayName":"PharmaRevo","name":"projects/pharmarevo-53c74","resources":{"hostingSite":"pharmarevo-53c74"},"state":"ACTIVE","etag":"1_25aef874-e506-4eea-9851-6bd95fa077b9"}
+[info] 
+[info] === Deploying to 'pharmarevo-53c74'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-03-15T14:49:29.779Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:29.779Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:29.779Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions [none]
+[debug] [2026-03-15T14:49:29.780Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-03-15T14:49:31.429Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions 200
+[debug] [2026-03-15T14:49:31.430Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions {"name":"projects/781901846437/sites/pharmarevo-53c74/versions/038fded455adeae2","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[pharmarevo-53c74]: beginning deploy... 
+[info] i  hosting[pharmarevo-53c74]: found 3 files in dist 
+[debug] [2026-03-15T14:49:31.457Z] [hosting] uploading with 200 concurrency
+[debug] [2026-03-15T14:49:31.533Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:31.533Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:31.536Z] [hosting] hash cache [ZGlzdA] stored for 3 files
+[debug] [2026-03-15T14:49:31.537Z] [hosting][hash queue][FINAL] {"max":71,"min":7,"avg":28.333333333333332,"active":0,"complete":3,"success":3,"errored":0,"retried":0,"total":3,"elapsed":78}
+[debug] [2026-03-15T14:49:31.538Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/781901846437/sites/pharmarevo-53c74/versions/038fded455adeae2:populateFiles [none]
+[debug] [2026-03-15T14:49:31.538Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/781901846437/sites/pharmarevo-53c74/versions/038fded455adeae2:populateFiles {"files":{"/index.html":"e2163188a2ce357c5a963d3ed3f1dabf8fa079fa211808c6972da3e2f73c62ac","/assets/index-Dk9UaxV8.css":"ab9f4ed6925310d8ff8c4dd7a8233a0201af15cce22d07921141e4401c2ccdcf","/assets/index-9U49PX9F.js":"bdda40c91df0fe5acf7a2a11870053fcaeebf176e9dcc33ca7e5a3e5598e55f5"}}
+[debug] [2026-03-15T14:49:32.489Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/781901846437/sites/pharmarevo-53c74/versions/038fded455adeae2:populateFiles 200
+[debug] [2026-03-15T14:49:32.489Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/781901846437/sites/pharmarevo-53c74/versions/038fded455adeae2:populateFiles {"uploadRequiredHashes":["bdda40c91df0fe5acf7a2a11870053fcaeebf176e9dcc33ca7e5a3e5598e55f5","e2163188a2ce357c5a963d3ed3f1dabf8fa079fa211808c6972da3e2f73c62ac"],"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files"}
+[debug] [2026-03-15T14:49:32.490Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:32.490Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:32.491Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:32.491Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:32.491Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files/bdda40c91df0fe5acf7a2a11870053fcaeebf176e9dcc33ca7e5a3e5598e55f5 [none]
+[debug] [2026-03-15T14:49:32.491Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files/bdda40c91df0fe5acf7a2a11870053fcaeebf176e9dcc33ca7e5a3e5598e55f5 [stream]
+[debug] [2026-03-15T14:49:32.494Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files/e2163188a2ce357c5a963d3ed3f1dabf8fa079fa211808c6972da3e2f73c62ac [none]
+[debug] [2026-03-15T14:49:32.494Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files/e2163188a2ce357c5a963d3ed3f1dabf8fa079fa211808c6972da3e2f73c62ac [stream]
+[debug] [2026-03-15T14:49:32.495Z] [hosting][populate queue][FINAL] {"max":958,"min":958,"avg":958,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":962}
+[debug] [2026-03-15T14:49:32.496Z] [hosting] uploads queued: 2
+[info] i  hosting: uploading new files [0/2] (0%) 
+[debug] [2026-03-15T14:49:34.273Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files/e2163188a2ce357c5a963d3ed3f1dabf8fa079fa211808c6972da3e2f73c62ac 200
+[debug] [2026-03-15T14:49:34.274Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files/e2163188a2ce357c5a963d3ed3f1dabf8fa079fa211808c6972da3e2f73c62ac [stream]
+[debug] [2026-03-15T14:49:34.379Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files/bdda40c91df0fe5acf7a2a11870053fcaeebf176e9dcc33ca7e5a3e5598e55f5 200
+[debug] [2026-03-15T14:49:34.379Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/038fded455adeae2/files/bdda40c91df0fe5acf7a2a11870053fcaeebf176e9dcc33ca7e5a3e5598e55f5 [stream]
+[debug] [2026-03-15T14:49:34.379Z] [hosting][upload queue][FINAL] {"max":1890,"min":1783,"avg":1836.5,"active":0,"complete":2,"success":2,"errored":0,"retried":0,"total":2,"elapsed":1890}
+[info] i  hosting: upload complete 
+[info] +  hosting[pharmarevo-53c74]: file upload complete 
+[debug] [2026-03-15T14:49:34.380Z] [hosting] deploy completed after 2945ms
+[debug] [2026-03-15T14:49:34.381Z] [
+  {
+    "config": {
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "site": "pharmarevo-53c74"
+    },
+    "version": "projects/781901846437/sites/pharmarevo-53c74/versions/038fded455adeae2"
+  }
+]
+[info] i  hosting[pharmarevo-53c74]: finalizing version... 
+[debug] [2026-03-15T14:49:34.384Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:34.384Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:34.385Z] >>> [apiv2][query] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions/038fded455adeae2 updateMask=status%2Cconfig
+[debug] [2026-03-15T14:49:34.385Z] >>> [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions/038fded455adeae2 {"status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]}}
+[debug] [2026-03-15T14:49:35.186Z] <<< [apiv2][status] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions/038fded455adeae2 200
+[debug] [2026-03-15T14:49:35.186Z] <<< [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions/038fded455adeae2 {"name":"projects/781901846437/sites/pharmarevo-53c74/versions/038fded455adeae2","status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-03-15T14:49:31.429869Z","createUser":{"email":"abhishekrchaudhari2104@gmail.com"},"finalizeTime":"2026-03-15T14:49:35.685089Z","finalizeUser":{"email":"abhishekrchaudhari2104@gmail.com"}}
+[debug] [2026-03-15T14:49:35.187Z] [hosting] finalized version for pharmarevo-53c74:[object Object]
+[info] +  hosting[pharmarevo-53c74]: version finalized 
+[info] i  hosting[pharmarevo-53c74]: releasing new version... 
+[debug] [2026-03-15T14:49:35.187Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:35.188Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:49:35.188Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases versionName=projects%2F781901846437%2Fsites%2Fpharmarevo-53c74%2Fversions%2F038fded455adeae2
+[debug] [2026-03-15T14:49:35.188Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases {}
+[debug] [2026-03-15T14:49:36.106Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases 200
+[debug] [2026-03-15T14:55:59.083Z] ----------------------------------------------------------------------
+[debug] [2026-03-15T14:55:59.088Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\ASUS\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2026-03-15T14:55:59.088Z] CLI Version:   14.24.1
+[debug] [2026-03-15T14:55:59.089Z] Platform:      win32
+[debug] [2026-03-15T14:55:59.089Z] Node Version:  v22.20.0
+[debug] [2026-03-15T14:55:59.089Z] Time:          Sun Mar 15 2026 20:25:59 GMT+0530 (India Standard Time)
+[debug] [2026-03-15T14:55:59.089Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-15T14:55:59.351Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-15T14:55:59.352Z] > authorizing via signed-in user (abhishekrchaudhari2104@gmail.com)
+[debug] [2026-03-15T14:55:59.353Z] [iam] checking project pharmarevo-53c74 for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-03-15T14:55:59.354Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:55:59.354Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:55:59.356Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions [none]
+[debug] [2026-03-15T14:55:59.356Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions x-goog-quota-user=projects/pharmarevo-53c74
+[debug] [2026-03-15T14:55:59.356Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-03-15T14:55:59.714Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions 200
+[debug] [2026-03-15T14:55:59.714Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/pharmarevo-53c74:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-03-15T14:55:59.715Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:55:59.715Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:55:59.715Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/pharmarevo-53c74 [none]
+[debug] [2026-03-15T14:56:00.106Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/pharmarevo-53c74 200
+[debug] [2026-03-15T14:56:00.106Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/pharmarevo-53c74 {"projectId":"pharmarevo-53c74","projectNumber":"781901846437","displayName":"PharmaRevo","name":"projects/pharmarevo-53c74","resources":{"hostingSite":"pharmarevo-53c74"},"state":"ACTIVE","etag":"1_25aef874-e506-4eea-9851-6bd95fa077b9"}
+[info] 
+[info] === Deploying to 'pharmarevo-53c74'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-03-15T14:56:00.113Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:00.113Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:00.113Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions [none]
+[debug] [2026-03-15T14:56:00.113Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-03-15T14:56:01.751Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions 200
+[debug] [2026-03-15T14:56:01.752Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions {"name":"projects/781901846437/sites/pharmarevo-53c74/versions/72750727111af830","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[pharmarevo-53c74]: beginning deploy... 
+[info] i  hosting[pharmarevo-53c74]: found 3 files in dist 
+[debug] [2026-03-15T14:56:01.811Z] [hosting] uploading with 200 concurrency
+[debug] [2026-03-15T14:56:01.991Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:01.991Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:01.996Z] [hosting] hash cache [ZGlzdA] stored for 3 files
+[debug] [2026-03-15T14:56:01.997Z] [hosting][hash queue][FINAL] {"max":168,"min":17,"avg":67.33333333333333,"active":0,"complete":3,"success":3,"errored":0,"retried":0,"total":3,"elapsed":181}
+[debug] [2026-03-15T14:56:01.999Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/781901846437/sites/pharmarevo-53c74/versions/72750727111af830:populateFiles [none]
+[debug] [2026-03-15T14:56:02.000Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/781901846437/sites/pharmarevo-53c74/versions/72750727111af830:populateFiles {"files":{"/index.html":"f0697b94351301813b00235f4b024787a7a20ccbda1143a75a398db92591ee71","/assets/index-DfytspYL.css":"c7c9495c3f4e317ee30f3877b9a4a5272925d8cc9924c301cfecf501ab3ff90d","/assets/index-mBbkfjxo.js":"279e3ee8e1f69815d08e2311253fd33d5ab494b20d038a90b9c3956f50c65c8f"}}
+[debug] [2026-03-15T14:56:02.867Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/781901846437/sites/pharmarevo-53c74/versions/72750727111af830:populateFiles 200
+[debug] [2026-03-15T14:56:02.868Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/781901846437/sites/pharmarevo-53c74/versions/72750727111af830:populateFiles {"uploadRequiredHashes":["c7c9495c3f4e317ee30f3877b9a4a5272925d8cc9924c301cfecf501ab3ff90d","279e3ee8e1f69815d08e2311253fd33d5ab494b20d038a90b9c3956f50c65c8f","f0697b94351301813b00235f4b024787a7a20ccbda1143a75a398db92591ee71"],"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files"}
+[debug] [2026-03-15T14:56:02.870Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:02.871Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:02.872Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:02.872Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:02.873Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:02.873Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:02.874Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/c7c9495c3f4e317ee30f3877b9a4a5272925d8cc9924c301cfecf501ab3ff90d [none]
+[debug] [2026-03-15T14:56:02.874Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/c7c9495c3f4e317ee30f3877b9a4a5272925d8cc9924c301cfecf501ab3ff90d [stream]
+[debug] [2026-03-15T14:56:02.879Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/279e3ee8e1f69815d08e2311253fd33d5ab494b20d038a90b9c3956f50c65c8f [none]
+[debug] [2026-03-15T14:56:02.880Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/279e3ee8e1f69815d08e2311253fd33d5ab494b20d038a90b9c3956f50c65c8f [stream]
+[debug] [2026-03-15T14:56:02.883Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/f0697b94351301813b00235f4b024787a7a20ccbda1143a75a398db92591ee71 [none]
+[debug] [2026-03-15T14:56:02.884Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/f0697b94351301813b00235f4b024787a7a20ccbda1143a75a398db92591ee71 [stream]
+[debug] [2026-03-15T14:56:02.888Z] [hosting][populate queue][FINAL] {"max":884,"min":884,"avg":884,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":899}
+[debug] [2026-03-15T14:56:02.888Z] [hosting] uploads queued: 3
+[info] i  hosting: uploading new files [0/3] (0%) 
+[debug] [2026-03-15T14:56:04.715Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/c7c9495c3f4e317ee30f3877b9a4a5272925d8cc9924c301cfecf501ab3ff90d 200
+[debug] [2026-03-15T14:56:04.715Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/c7c9495c3f4e317ee30f3877b9a4a5272925d8cc9924c301cfecf501ab3ff90d [stream]
+[debug] [2026-03-15T14:56:04.912Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/f0697b94351301813b00235f4b024787a7a20ccbda1143a75a398db92591ee71 200
+[debug] [2026-03-15T14:56:04.913Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/f0697b94351301813b00235f4b024787a7a20ccbda1143a75a398db92591ee71 [stream]
+[debug] [2026-03-15T14:56:05.012Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/279e3ee8e1f69815d08e2311253fd33d5ab494b20d038a90b9c3956f50c65c8f 200
+[debug] [2026-03-15T14:56:05.013Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/pharmarevo-53c74/versions/72750727111af830/files/279e3ee8e1f69815d08e2311253fd33d5ab494b20d038a90b9c3956f50c65c8f [stream]
+[debug] [2026-03-15T14:56:05.013Z] [hosting][upload queue][FINAL] {"max":2142,"min":1846,"avg":2009.6666666666667,"active":0,"complete":3,"success":3,"errored":0,"retried":0,"total":3,"elapsed":2144}
+[info] i  hosting: upload complete 
+[info] +  hosting[pharmarevo-53c74]: file upload complete 
+[debug] [2026-03-15T14:56:05.013Z] [hosting] deploy completed after 3249ms
+[debug] [2026-03-15T14:56:05.014Z] [
+  {
+    "config": {
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "site": "pharmarevo-53c74"
+    },
+    "version": "projects/781901846437/sites/pharmarevo-53c74/versions/72750727111af830"
+  }
+]
+[info] i  hosting[pharmarevo-53c74]: finalizing version... 
+[debug] [2026-03-15T14:56:05.017Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:05.017Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:05.017Z] >>> [apiv2][query] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions/72750727111af830 updateMask=status%2Cconfig
+[debug] [2026-03-15T14:56:05.018Z] >>> [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions/72750727111af830 {"status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]}}
+[debug] [2026-03-15T14:56:05.766Z] <<< [apiv2][status] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions/72750727111af830 200
+[debug] [2026-03-15T14:56:05.767Z] <<< [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/versions/72750727111af830 {"name":"projects/781901846437/sites/pharmarevo-53c74/versions/72750727111af830","status":"FINALIZED","config":{"rewrites":[{"glob":"**","path":"/index.html"}]},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-03-15T14:56:01.747376Z","createUser":{"email":"abhishekrchaudhari2104@gmail.com"},"finalizeTime":"2026-03-15T14:56:06.350061Z","finalizeUser":{"email":"abhishekrchaudhari2104@gmail.com"}}
+[debug] [2026-03-15T14:56:05.767Z] [hosting] finalized version for pharmarevo-53c74:[object Object]
+[info] +  hosting[pharmarevo-53c74]: version finalized 
+[info] i  hosting[pharmarevo-53c74]: releasing new version... 
+[debug] [2026-03-15T14:56:05.767Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:05.767Z] Checked if tokens are valid: true, expires at: 1773588786236
+[debug] [2026-03-15T14:56:05.768Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases versionName=projects%2F781901846437%2Fsites%2Fpharmarevo-53c74%2Fversions%2F72750727111af830
+[debug] [2026-03-15T14:56:05.768Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases {}
+[debug] [2026-03-15T14:56:06.722Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/pharmarevo-53c74/channels/live/releases 200

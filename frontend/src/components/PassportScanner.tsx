@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { doc, getDoc, updateDoc, arrayUnion, collection, getDocs, query, where } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion, collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { QRCodeSVG } from "qrcode.react";
 import { Html5QrcodeScanner } from "html5-qrcode";
@@ -65,23 +65,23 @@ const PassportScanner: React.FC<PassportScannerProps> = ({ ngoName = "NGO", ngoI
     setError("");
     setPassport(null);
     try {
-      // First try direct Firestore document ID lookup
-      const docRef = doc(db, "medicine_passports", lookupId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setPassport({ id: docSnap.id, ...docSnap.data() });
-        setStep("confirm");
-        return;
-      }
-      // Fallback: search by passportId field (PP-xxx format)
-      const q = query(collection(db, "medicine_passports"), where("passportId", "==", lookupId));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        const d = snap.docs[0];
-        setPassport({ id: d.id, ...d.data() });
+      // First try direct Firestore document ID
+      try {
+        const docSnap = await getDoc(doc(db, "medicine_passports", lookupId));
+        if (docSnap.exists()) {
+          setPassport({ id: docSnap.id, ...docSnap.data() });
+          setStep("confirm");
+          return;
+        }
+      } catch {}
+      // Fallback: scan all passports and match by passportId field (PP-xxx)
+      const allSnap = await getDocs(collection(db, "medicine_passports"));
+      const match = allSnap.docs.find(d => d.data().passportId === lookupId);
+      if (match) {
+        setPassport({ id: match.id, ...match.data() });
         setStep("confirm");
       } else {
-        setError("Passport not found. Use the Firestore Document ID shown in the admin passport modal.");
+        setError("Passport not found. Check the ID and try again.");
       }
     } catch {
       setError("Error looking up passport. Try again.");
@@ -223,12 +223,12 @@ const PassportScanner: React.FC<PassportScannerProps> = ({ ngoName = "NGO", ngoI
           {mode === "manual" ? (
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700">Passport ID</label>
-              <p className="text-xs text-gray-500 mb-2">Copy the ID from <strong>Admin → Passports → View Full Passport</strong> (the blue box)</p>
+              <p className="text-xs text-gray-500 mb-2">Enter the <strong>PP-xxx</strong> ID shown on the passport card</p>
               <input
                 type="text"
                 value={passportId}
                 onChange={e => setPassportId(e.target.value)}
-                placeholder="Enter passport ID from QR code..."
+                placeholder="e.g. PP-1773586010610-DKS5PF"
                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
               <button
