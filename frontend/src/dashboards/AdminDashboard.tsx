@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { collection, getDocs, updateDoc, doc, deleteDoc, addDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import DeliveryManager from "../components/DeliveryManager";
+import MedicinePassport from "../components/MedicinePassport";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -88,11 +89,35 @@ const AdminDashboard = () => {
     }
   };
 
+  const createPassport = async (donation: any, donationId: string) => {
+    const passportId = `PP-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    await addDoc(collection(db, "medicine_passports"), {
+      passportId,
+      donationId,
+      medicineName: donation.medicineName,
+      quantity: donation.quantity,
+      expiryDate: donation.expiryDate,
+      source: donation.source || "individual",
+      batchNumber: donation.batchNumber || null,
+      donorId: donation.donorId || null,
+      status: "Verified",
+      createdAt: Date.now(),
+      timeline: [
+        { action: "Passport Created", timestamp: Date.now(), note: "Medicine donated and passport issued" },
+        { action: "Verified by Admin", timestamp: Date.now(), note: "Medicine quality verified by PharmaRevo admin" }
+      ]
+    });
+  };
+
   const updateDonationStatus = async (donationId: string, status: string) => {
     try {
+      const donation = donations.find(d => d.id === donationId);
       await updateDoc(doc(db, "donations", donationId), { status });
+      if (status === "Approved" && donation) {
+        await createPassport(donation, donationId);
+      }
       fetchData();
-      alert(`Donation ${status.toLowerCase()} successfully!`);
+      alert(`Donation ${status.toLowerCase()} successfully!${status === "Approved" ? " Digital Passport created! 🔏" : ""}`);
     } catch (error) {
       console.error("Error updating donation:", error);
       alert("Error updating donation status");
@@ -106,8 +131,7 @@ const AdminDashboard = () => {
       // If approved, move to appropriate collection
       if (status === "Approved") {
         if (stockItem.isDonation) {
-          // Move to donations collection
-          await addDoc(collection(db, "donations"), {
+          const newDonation = {
             medicineName: stockItem.medicineName,
             expiryDate: stockItem.expiryDate,
             quantity: stockItem.quantity,
@@ -117,7 +141,9 @@ const AdminDashboard = () => {
             status: "Approved",
             createdAt: new Date().getTime(),
             source: "pharmacy"
-          });
+          };
+          const newDocRef = await addDoc(collection(db, "donations"), newDonation);
+          await createPassport(newDonation, newDocRef.id);
         } else {
           // Move to approved sales collection
           await addDoc(collection(db, "approved_sales"), {
@@ -161,6 +187,7 @@ const AdminDashboard = () => {
     { id: "company", label: "🏢 Company Verification", icon: "🏢" },
     { id: "approved-donations", label: "✅ Approved Donations", icon: "✅" },
     { id: "logistics", label: "🚚 Logistics Management", icon: "🚚" },
+    { id: "passports", label: "🔏 Passports", icon: "🔏" },
     { id: "ngo-requests", label: "🏥 NGO Requests", icon: "🏥" },
     { id: "sales", label: "💰 Approved Sales", icon: "💰" },
     { id: "inventory", label: "📦 Inventory Control", icon: "📦" },
@@ -952,18 +979,13 @@ const AdminDashboard = () => {
       await updateDoc(doc(db, "company_batches", batchId), { status });
       
       if (status === "Approved") {
-        await addDoc(collection(db, "donations"), {
+        const newBatchDonation = {
           medicineName: batchItem.medicineName,
           expiryDate: batchItem.expiryDate,
           quantity: batchItem.quantity,
           description: `Company batch donation - ${batchItem.reason}`,
           imageUrl: "",
-          pickupAddress: {
-            address: batchItem.pickupAddress,
-            city: batchItem.city,
-            pinCode: batchItem.pinCode,
-            landmark: batchItem.landmark
-          },
+          pickupAddress: { address: batchItem.pickupAddress, city: batchItem.city, pinCode: batchItem.pinCode, landmark: batchItem.landmark },
           contactNumber: batchItem.contactNumber,
           donorId: batchItem.companyId,
           status: "Approved",
@@ -974,7 +996,9 @@ const AdminDashboard = () => {
           source: "company",
           batchNumber: batchItem.batchNumber,
           manufacturingDate: batchItem.manufacturingDate
-        });
+        };
+        const newDocRef = await addDoc(collection(db, "donations"), newBatchDonation);
+        await createPassport(newBatchDonation, newDocRef.id);
       }
       
       fetchData();
@@ -1431,6 +1455,7 @@ const AdminDashboard = () => {
             {activeTab === "company" && renderCompanyVerification()}
             {activeTab === "approved-donations" && renderApprovedDonations()}
             {activeTab === "logistics" && <DeliveryManager />}
+            {activeTab === "passports" && <MedicinePassport />}
             {activeTab === "ngo-requests" && renderNgoRequests()}
             {activeTab === "sales" && renderApprovedSales()}
             {activeTab === "inventory" && renderInventoryControl()}

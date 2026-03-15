@@ -8,6 +8,7 @@ import PharmacyDashboard from './dashboards/PharmacyDashboard';
 import CompanyDashboard from './dashboards/CompanyDashboard';
 import NGODashboard from './dashboards/NGODashboard';
 import AdminDashboard from './dashboards/AdminDashboard';
+import PassportView from './pages/PassportView';
 import Chatbot from './components/Chatbot';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -27,6 +28,7 @@ function App() {
         <Route path="/company-dashboard" element={<CompanyDashboard />} />
         <Route path="/ngo-dashboard" element={<NGODashboard />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/passport/:id" element={<PassportView />} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
       <Chatbot />

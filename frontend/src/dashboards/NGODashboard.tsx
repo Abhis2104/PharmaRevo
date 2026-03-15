@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import PassportScanner from "../components/PassportScanner";
 
 const NGODashboard = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -299,6 +300,7 @@ const NGODashboard = () => {
     { id: "search", label: "🔎 Search Medicines", icon: "🔎" },
     { id: "cart", label: "🛒 Request Cart", icon: "🛒" },
     { id: "status", label: "✅ Request Status", icon: "✅" },
+    { id: "passport", label: "🔏 Scan Passport", icon: "🔏" },
     { id: "reports", label: "🧾 Usage Reports", icon: "🧾" },
     { id: "support", label: "💬 Support", icon: "💬" }
   ];
@@ -458,6 +460,13 @@ const NGODashboard = () => {
               )}
             </div>
           </div>
+        );
+      case "passport":
+        return (
+          <PassportScanner
+            ngoName={profileData.organizationName || "NGO"}
+            ngoId={auth.currentUser?.uid || ""}
+          />
         );
       case "reports":
         return (
