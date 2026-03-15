@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, updateDoc, arrayUnion, collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { QRCodeSVG } from "qrcode.react";
 import { Html5QrcodeScanner } from "html5-qrcode";
@@ -59,20 +59,29 @@ const PassportScanner: React.FC<PassportScannerProps> = ({ ngoName = "NGO", ngoI
   };
 
   const lookupPassport = async (id?: string) => {
-    const lookupId = id || passportId.trim();
+    const lookupId = (id || passportId).trim();
     if (!lookupId) return;
     setLoading(true);
     setError("");
     setPassport(null);
     try {
+      // First try direct Firestore document ID lookup
       const docRef = doc(db, "medicine_passports", lookupId);
       const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) {
-        setError("Passport not found. Please check the ID.");
-      } else {
-        const data = { id: docSnap.id, ...docSnap.data() };
-        setPassport(data);
+      if (docSnap.exists()) {
+        setPassport({ id: docSnap.id, ...docSnap.data() });
         setStep("confirm");
+        return;
+      }
+      // Fallback: search by passportId field (PP-xxx format)
+      const q = query(collection(db, "medicine_passports"), where("passportId", "==", lookupId));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const d = snap.docs[0];
+        setPassport({ id: d.id, ...d.data() });
+        setStep("confirm");
+      } else {
+        setError("Passport not found. Use the Firestore Document ID shown in the admin passport modal.");
       }
     } catch {
       setError("Error looking up passport. Try again.");
@@ -213,7 +222,8 @@ const PassportScanner: React.FC<PassportScannerProps> = ({ ngoName = "NGO", ngoI
 
           {mode === "manual" ? (
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">Passport Document ID</label>
+              <label className="block text-sm font-medium text-gray-700">Passport ID</label>
+              <p className="text-xs text-gray-500 mb-2">Copy the ID from <strong>Admin → Passports → View Full Passport</strong> (the blue box)</p>
               <input
                 type="text"
                 value={passportId}

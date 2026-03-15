@@ -102,7 +102,7 @@ const MedicinePassport = () => {
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <h4 className="font-bold text-gray-800">{passport.medicineName}</h4>
-                    <p className="text-xs text-gray-500 font-mono">ID: {passport.passportId}</p>
+                    <p className="text-xs text-gray-500 font-mono">PP-ID: {passport.passportId}</p>
                   </div>
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${getStatusColor(passport.status)}`}>
                     {getStatusIcon(passport.status)} {passport.status}
@@ -174,6 +174,11 @@ const MedicinePassport = () => {
                 <QRCodeSVG value={passportUrl(selectedPassport.id)} size={160} />
               </div>
               <p className="text-center text-xs text-gray-500">Scan to verify this passport</p>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                <p className="text-xs font-semibold text-blue-700 mb-1">🔑 Use this ID in NGO Scanner:</p>
+                <p className="text-sm font-mono font-bold text-blue-900 break-all select-all">{selectedPassport.id}</p>
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 {[
