@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — PharmaRevo</title>
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">Pharma<span>Revo</span></div>
+    <div class="sidebar-menu">
+      <a class="menu-item active" onclick="showSection('overview')">
+        <i class="fa fa-gauge"></i> Overview
+      </a>
+      <a class="menu-item" onclick="showSection('users')">
+        <i class="fa fa-users"></i> All Users
+      </a>
+      <a class="menu-item" onclick="showSection('donations')">
+        <i class="fa fa-pills"></i> Donations
+      </a>
+      <a class="menu-item" onclick="showSection('disposal')">
+        <i class="fa fa-trash-can"></i> Disposal Queue
+      </a>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="logout-btn" onclick="logout()">
+        <i class="fa fa-right-from-bracket"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="topbar">
+      <h1>Admin <span>Dashboard</span></h1>
+      <div class="user-badge">
+        <i class="fa fa-shield-halved" style="color:#00c9a7;"></i>
+        <span id="userName">Admin</span>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div id="overview">
+      <div class="stats-row">
+        <div class="stat-card">
+          <i class="fa fa-users"></i>
+          <h3 id="totalUsers">0</h3>
+          <p>Registered Users</p>
+        </div>
+        <div class="stat-card">
+          <i class="fa fa-pills"></i>
+          <h3>0</h3>
+          <p>Total Donations</p>
+        </div>
+        <div class="stat-card">
+          <i class="fa fa-clock"></i>
+          <h3>0</h3>
+          <p>Pending Approval</p>
+        </div>
+        <div class="stat-card">
+          <i class="fa fa-truck-medical"></i>
+          <h3>0</h3>
+          <p>Distributed</p>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <h2><i class="fa fa-gauge"></i> System Overview</h2>
+        <p style="color:#94a3b8; line-height:1.8;">
+          Welcome to the PharmaRevo Admin Panel. Use the sidebar to manage users,
+          review donation submissions, approve or reject medicines, and monitor
+          the disposal queue.
+        </p>
+      </div>
+    </div>
+
+    <!-- ALL USERS -->
+    <div class="section-card" id="users" style="display:none;">
+      <h2><i class="fa fa-users"></i> Registered Users</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Email</th><th>Role</th><th>Joined</th>
+          </tr>
+        </thead>
+        <tbody id="userTable">
+          <tr><td colspan="4" style="color:#94a3b8; text-align:center; padding:30px;">
+            Loading users...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DONATIONS -->
+    <div class="section-card" id="donations" style="display:none;">
+      <h2><i class="fa fa-pills"></i> Donation Submissions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Medicine</th><th>Donor</th><th>Qty</th><th>Expiry</th><th>Status</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="6" style="color:#94a3b8; text-align:center; padding:30px;">
+            No donations submitted yet.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DISPOSAL QUEUE -->
+    <div class="section-card" id="disposal" style="display:none;">
+      <h2><i class="fa fa-trash-can"></i> Disposal Queue</h2>
+      <table>
+        <thead>
+          <tr><th>Medicine</th><th>Source</th><th>Qty</th><th>Reason</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5" style="color:#94a3b8; text-align:center; padding:30px;">
+            No items in disposal queue.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script>
+    function checkAuth() {
+      const token = localStorage.getItem("token")
+      const role  = localStorage.getItem("role")
+      if (!token || role !== "admin") window.location.href = "../login.html"
+    }
+
+    function loadUser() {
+      document.getElementById("userName").textContent = localStorage.getItem("name") || "Admin"
+    }
+
+    // Load all users from backend — this is a real API call
+    async function loadUsers() {
+      try {
+        const res   = await fetch("/api/auth/users", {
+          headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+        })
+        const users = await res.json()
+        const tbody = document.getElementById("userTable")
+
+        if (!users.length) {
+          tbody.innerHTML = `<tr><td colspan="4" style="color:#94a3b8; text-align:center; padding:30px;">No users found.</td></tr>`
+          return
+        }
+
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td>${u.name}</td>
+            <td>${u.email}</td>
+            <td><span class="badge badge-approved">${u.role}</span></td>
+            <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+          </tr>
+        `).join("")
+
+        document.getElementById("totalUsers").textContent = users.length
+
+      } catch (err) {
+        console.log("Could not load users:", err)
+      }
+    }
+
+    function showSection(id) {
+      ["overview", "users", "donations", "disposal"].forEach(s => {
+        document.getElementById(s).style.display = "none"
+      })
+      document.getElementById(id).style.display = "block"
+      document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"))
+      event.currentTarget.classList.add("active")
+
+      // Load users from DB when that tab is clicked
+      if (id === "users") loadUsers()
+    }
+
+    function logout() {
+      localStorage.clear()
+      window.location.href = "../login.html"
+    }
+
+    checkAuth()
+    loadUser()
+  </script>
+
+</body>
+</html>

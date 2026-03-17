@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pharmacy Dashboard — PharmaRevo</title>
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">Pharma<span>Revo</span></div>
+    <div class="sidebar-menu">
+      <a class="menu-item active" onclick="showSection('donate')">
+        <i class="fa fa-pills"></i> Donate Stock
+      </a>
+      <a class="menu-item" onclick="showSection('history')">
+        <i class="fa fa-clock-rotate-left"></i> Donation History
+      </a>
+      <a class="menu-item" onclick="showSection('profile')">
+        <i class="fa fa-store"></i> Pharmacy Profile
+      </a>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="logout-btn" onclick="logout()">
+        <i class="fa fa-right-from-bracket"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="topbar">
+      <h1>Pharmacy <span>Dashboard</span></h1>
+      <div class="user-badge">
+        <i class="fa fa-circle-user"></i>
+        <span id="userName">Loading...</span>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <i class="fa fa-pills"></i>
+        <h3>0</h3>
+        <p>Batches Donated</p>
+      </div>
+      <div class="stat-card">
+        <i class="fa fa-circle-check"></i>
+        <h3>0</h3>
+        <p>Approved</p>
+      </div>
+      <div class="stat-card">
+        <i class="fa fa-trash-can"></i>
+        <h3>0</h3>
+        <p>Safely Disposed</p>
+      </div>
+      <div class="stat-card">
+        <i class="fa fa-award"></i>
+        <h3>0</h3>
+        <p>CSR Points</p>
+      </div>
+    </div>
+
+    <div class="section-card" id="donate">
+      <h2><i class="fa fa-plus"></i> Donate Medicine Stock</h2>
+      <div class="dash-form">
+        <div class="form-row">
+          <input type="text" placeholder="Medicine / Drug Name">
+          <input type="text" placeholder="Batch Number">
+        </div>
+        <div class="form-row">
+          <input type="number" placeholder="Quantity (units)">
+          <input type="date" placeholder="Expiry Date">
+        </div>
+        <select>
+          <option value="" disabled selected>Donation Type</option>
+          <option>Near-Expiry (valid, usable)</option>
+          <option>Surplus Stock</option>
+          <option>Expired (for disposal)</option>
+        </select>
+        <textarea rows="3" placeholder="Storage conditions, packaging details..."></textarea>
+        <button class="submit-btn">
+          <i class="fa fa-paper-plane"></i> Submit Stock Donation
+        </button>
+      </div>
+    </div>
+
+    <div class="section-card" id="history" style="display:none;">
+      <h2><i class="fa fa-list"></i> Donation History</h2>
+      <table>
+        <thead>
+          <tr><th>Medicine</th><th>Batch</th><th>Qty</th><th>Type</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="5" style="color:#94a3b8; text-align:center; padding:30px;">
+            No donations yet.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-card" id="profile" style="display:none;">
+      <h2><i class="fa fa-store"></i> Pharmacy Profile</h2>
+      <p style="color:#94a3b8;">Name: <span id="profileName" style="color:white;"></span></p>
+      <p style="color:#94a3b8; margin-top:10px;">Role: <span style="color:#00c9a7;">Pharmacy</span></p>
+    </div>
+
+  </main>
+
+  <script>
+    function checkAuth() {
+      const token = localStorage.getItem("token")
+      const role  = localStorage.getItem("role")
+      if (!token || role !== "pharmacy") window.location.href = "../login.html"
+    }
+
+    function loadUser() {
+      const name = localStorage.getItem("name") || "Pharmacy"
+      document.getElementById("userName").textContent    = name
+      document.getElementById("profileName").textContent = name
+    }
+
+    function showSection(id) {
+      ["donate", "history", "profile"].forEach(s => {
+        document.getElementById(s).style.display = "none"
+      })
+      document.getElementById(id).style.display = "block"
+      document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"))
+      event.currentTarget.classList.add("active")
+    }
+
+    function logout() {
+      localStorage.clear()
+      window.location.href = "../login.html"
+    }
+
+    checkAuth()
+    loadUser()
+  </script>
+
+</body>
+</html>

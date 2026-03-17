@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corporate Dashboard — PharmaRevo</title>
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">Pharma<span>Revo</span></div>
+    <div class="sidebar-menu">
+      <a class="menu-item active" onclick="showSection('donate')">
+        <i class="fa fa-building"></i> CSR Donation
+      </a>
+      <a class="menu-item" onclick="showSection('reports')">
+        <i class="fa fa-chart-bar"></i> CSR Reports
+      </a>
+      <a class="menu-item" onclick="showSection('certificates')">
+        <i class="fa fa-certificate"></i> Certificates
+      </a>
+      <a class="menu-item" onclick="showSection('profile')">
+        <i class="fa fa-user-tie"></i> Company Profile
+      </a>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="logout-btn" onclick="logout()">
+        <i class="fa fa-right-from-bracket"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="topbar">
+      <h1>Corporate <span>Dashboard</span></h1>
+      <div class="user-badge">
+        <i class="fa fa-circle-user"></i>
+        <span id="userName">Loading...</span>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <i class="fa fa-indian-rupee-sign"></i>
+        <h3>₹0</h3>
+        <p>CSR Value Donated</p>
+      </div>
+      <div class="stat-card">
+        <i class="fa fa-pills"></i>
+        <h3>0</h3>
+        <p>Medicine Batches</p>
+      </div>
+      <div class="stat-card">
+        <i class="fa fa-certificate"></i>
+        <h3>0</h3>
+        <p>Certificates Issued</p>
+      </div>
+      <div class="stat-card">
+        <i class="fa fa-heart"></i>
+        <h3>0</h3>
+        <p>Impact Score</p>
+      </div>
+    </div>
+
+    <div class="section-card" id="donate">
+      <h2><i class="fa fa-plus"></i> Submit CSR Donation</h2>
+      <div class="dash-form">
+        <div class="form-row">
+          <input type="text" placeholder="Company Name">
+          <input type="text" placeholder="CSR Head / Contact Person">
+        </div>
+        <div class="form-row">
+          <input type="text" placeholder="Medicine Name">
+          <input type="number" placeholder="Quantity">
+        </div>
+        <div class="form-row">
+          <input type="date" placeholder="Expiry Date">
+          <input type="number" placeholder="Estimated Value (₹)">
+        </div>
+        <textarea rows="3" placeholder="CSR initiative details, target beneficiaries..."></textarea>
+        <button class="submit-btn">
+          <i class="fa fa-paper-plane"></i> Submit CSR Donation
+        </button>
+      </div>
+    </div>
+
+    <div class="section-card" id="reports" style="display:none;">
+      <h2><i class="fa fa-chart-bar"></i> CSR Impact Reports</h2>
+      <p style="color:#94a3b8; padding:20px 0;">
+        Reports will appear here once donations are approved and distributed.
+      </p>
+    </div>
+
+    <div class="section-card" id="certificates" style="display:none;">
+      <h2><i class="fa fa-certificate"></i> Donation Certificates</h2>
+      <p style="color:#94a3b8; padding:20px 0;">
+        Certificates are issued after admin verification of your donation.
+      </p>
+    </div>
+
+    <div class="section-card" id="profile" style="display:none;">
+      <h2><i class="fa fa-user-tie"></i> Company Profile</h2>
+      <p style="color:#94a3b8;">Name: <span id="profileName" style="color:white;"></span></p>
+      <p style="color:#94a3b8; margin-top:10px;">Role: <span style="color:#00c9a7;">Corporate (CSR)</span></p>
+    </div>
+
+  </main>
+
+  <script>
+    function checkAuth() {
+      const token = localStorage.getItem("token")
+      const role  = localStorage.getItem("role")
+      if (!token || role !== "corporate") window.location.href = "../login.html"
+    }
+
+    function loadUser() {
+      const name = localStorage.getItem("name") || "Corporate"
+      document.getElementById("userName").textContent    = name
+      document.getElementById("profileName").textContent = name
+    }
+
+    function showSection(id) {
+      ["donate", "reports", "certificates", "profile"].forEach(s => {
+        document.getElementById(s).style.display = "none"
+      })
+      document.getElementById(id).style.display = "block"
+      document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"))
+      event.currentTarget.classList.add("active")
+    }
+
+    function logout() {
+      localStorage.clear()
+      window.location.href = "../login.html"
+    }
+
+    checkAuth()
+    loadUser()
+  </script>
+
+</body>
+</html>

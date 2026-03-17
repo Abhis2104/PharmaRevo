@@ -1,0 +1,29 @@
+{
+  "name": "pharmarevo",
+  "version": "1.0.0",
+  "description": "<<<<<<< HEAD\r # PharmaRevo - Full Stack (Frontend + Backend)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abhis2104/PharmaRevo.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Abhis2104/PharmaRevo/issues"
+  },
+  "homepage": "https://github.com/Abhis2104/PharmaRevo#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.3.0"
+  }
+}

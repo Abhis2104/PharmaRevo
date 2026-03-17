@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — PharmaRevo</title>
+  <link rel="stylesheet" href="css/auth.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="auth-card">
+
+    <a href="index.html" class="auth-logo">Pharma<span>Revo</span></a>
+
+    <h2>Welcome Back</h2>
+    <p class="sub">Login to your PharmaRevo account</p>
+
+    <div class="input-group">
+      <i class="fa fa-envelope"></i>
+      <input type="email" id="email" placeholder="Email Address">
+    </div>
+
+    <div class="input-group">
+      <i class="fa fa-lock"></i>
+      <input type="password" id="password" placeholder="Password">
+    </div>
+
+    <button class="auth-btn" onclick="login()">Login</button>
+
+    <p class="msg" id="msg"></p>
+
+    <div class="auth-footer">
+      Don't have an account? <a href="signup.html">Sign Up</a>
+    </div>
+
+  </div>
+
+  <script>
+
+    // This object maps each role to its dashboard page
+    // When we add a new role, we just add one line here
+    const dashboards = {
+      donor:     "dashboards/donor.html",
+      ngo:       "dashboards/ngo.html",
+      pharmacy:  "dashboards/pharmacy.html",
+      corporate: "dashboards/corporate.html",
+      admin:     "dashboards/admin.html"
+    }
+
+    async function login() {
+
+      const email    = document.getElementById("email").value.trim()
+      const password = document.getElementById("password").value
+      const msg      = document.getElementById("msg")
+
+      if (!email || !password) {
+        msg.textContent = "Please enter email and password"
+        return
+      }
+
+      try {
+
+        const res  = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        })
+
+        const data = await res.json()
+
+        if (data.status === "success") {
+
+          // Save token and user info in localStorage
+          // localStorage persists even after browser tab closes
+          // This is how we keep the user "logged in"
+          localStorage.setItem("token", data.token)
+          localStorage.setItem("role",  data.role)
+          localStorage.setItem("name",  data.name)
+
+          msg.className   = "msg success"
+          msg.textContent = `Welcome, ${data.name}! Redirecting...`
+
+          // Redirect to the correct dashboard based on role
+          setTimeout(() => {
+            window.location.href = dashboards[data.role]
+          }, 1200)
+
+        } else {
+          msg.textContent = data.message
+        }
+
+      } catch (err) {
+        msg.textContent = "Server error. Is the server running?"
+      }
+
+    }
+
+  </script>
+
+</body>
+</html>
