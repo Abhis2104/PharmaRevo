@@ -1,42 +1,28 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase";
+import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
 
 interface DonationListProps {
   refreshTrigger?: number;
+  user: any;
 }
 
-const DonationList: React.FC<DonationListProps> = ({ refreshTrigger }) => {
+const DonationList: React.FC<DonationListProps> = ({ refreshTrigger, user }) => {
   const [donations, setDonations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [authReady, setAuthReady] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const fetchDonations = async (user: any) => {
+  const fetchDonations = async () => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
     try {
       const snapshot = await getDocs(collection(db, "donations"));
       const all = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const mine = all.filter(d => {
-        // Match by uid, email stored as donorId, or donorEmail field
-        if (d.donorId === user.uid) return true;
-        if (d.donorId === user.email) return true;
-        if (d.donorEmail && d.donorEmail === user.email) return true;
-        // Old donations: source is individual and no donorId stored — show all individual donations for logged-in user
-        // since there's no other way to identify the owner
-        if (!d.donorId && !d.donorEmail && d.source === "individual") return true;
-        return false;
-      });
+      const mine = all.filter(d =>
+        d.donorId === user.uid ||
+        d.donorId === user.email ||
+        (d.donorEmail && d.donorEmail === user.email) ||
+        (!d.donorId && !d.donorEmail && d.source === "individual")
+      );
       mine.sort((a, b) => {
         const aTime = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt || 0).getTime();
         const bTime = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt || 0).getTime();
@@ -51,15 +37,15 @@ const DonationList: React.FC<DonationListProps> = ({ refreshTrigger }) => {
   };
 
   useEffect(() => {
-    if (authReady) fetchDonations(currentUser);
-  }, [authReady, refreshTrigger]);
+    fetchDonations();
+  }, [user, refreshTrigger]);
 
   return (
     <div className="bg-white shadow-xl rounded-2xl p-6 border">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800">My Donations</h2>
         <button
-          onClick={() => fetchDonations(currentUser)}
+          onClick={fetchDonations}
           disabled={loading}
           className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-sm"
         >

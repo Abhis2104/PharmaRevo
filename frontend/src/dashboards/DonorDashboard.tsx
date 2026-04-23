@@ -160,7 +160,7 @@ const DonorDashboard = () => {
               </div>
             </div>
             <div className="p-6">
-              <DonationList refreshTrigger={refreshTrigger} />
+              <DonationList refreshTrigger={refreshTrigger} user={user} />
             </div>
           </div>
         </div>
