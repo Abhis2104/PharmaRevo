@@ -20,6 +20,7 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
   const [pinCode, setPinCode] = useState("");
   const [landmark, setLandmark] = useState("");
   const [contactNumber, setContactNumber] = useState("");
+  const [consentGiven, setConsentGiven] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   
@@ -41,6 +42,11 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
 
     if (!medicineName.trim() || !expiryDate || !quantity || !pickupAddress.trim() || !city.trim() || !pinCode.trim() || !contactNumber.trim()) {
       alert("Please fill all required fields");
+      return;
+    }
+
+    if (!consentGiven) {
+      alert("Please give your consent before donating.");
       return;
     }
 
@@ -106,6 +112,15 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
         },
         contactNumber: contactNumber.trim(),
         donorId: currentUser.uid,
+        consentChain: [
+          {
+            stage: "Donor Consent",
+            actor: currentUser.uid,
+            actorLabel: "Donor",
+            timestamp: Date.now(),
+            note: "Donor voluntarily agreed to donate this medicine for ethical redistribution."
+          }
+        ],
         status: "Pending",
         deliveryStatus: "pending_pickup",
         assignedVolunteerId: null,
@@ -130,6 +145,7 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
       setPinCode("");
       setLandmark("");
       setContactNumber("");
+      setConsentGiven(false);
       
       // Reset file input element
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -356,9 +372,24 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
         </div>
       </div>
 
+      {/* Consent Checkbox */}
+      <div className="border-t pt-4">
+        <label className="flex items-start space-x-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={consentGiven}
+            onChange={e => setConsentGiven(e.target.checked)}
+            className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-700">
+            ✅ I voluntarily consent to donate this medicine for ethical redistribution through PharmaRevo. I confirm the medicine is safe, unexpired, and in original packaging. This consent will be recorded as part of the Consent-to-Care Chain.
+          </span>
+        </label>
+      </div>
+
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !consentGiven}
         className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Adding..." : "Add Donation"}

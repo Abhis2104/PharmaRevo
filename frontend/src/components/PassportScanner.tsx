@@ -107,6 +107,13 @@ const PassportScanner: React.FC<PassportScannerProps> = ({ ngoName = "NGO", ngoI
           action: "Received by NGO/Hospital",
           timestamp: Date.now(),
           note: `Confirmed receipt by ${ngoName}`
+        }),
+        consentChain: arrayUnion({
+          stage: "NGO/Hospital Acceptance",
+          actor: ngoId,
+          actorLabel: ngoName,
+          timestamp: Date.now(),
+          note: `Medicine received and accepted by ${ngoName}`
         })
       });
       setPassport({ ...passport, status: "Distributed" });
@@ -140,6 +147,13 @@ const PassportScanner: React.FC<PassportScannerProps> = ({ ngoName = "NGO", ngoI
           action: `Passport ${usageForm.outcome}`,
           timestamp: Date.now(),
           note: `${usageForm.purpose} — Qty: ${usageForm.quantityUsed} — by ${ngoName}`
+        }),
+        consentChain: arrayUnion({
+          stage: "Patient Receipt (Anonymous)",
+          actor: ngoId,
+          actorLabel: ngoName,
+          timestamp: Date.now(),
+          note: `Medicine reached patient anonymously. Purpose: ${usageForm.purpose}. Qty: ${usageForm.quantityUsed}. Outcome: ${usageForm.outcome}.`
         })
       });
       setStep("done");

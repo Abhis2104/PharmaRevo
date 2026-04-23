@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, where, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { QRCodeSVG } from "qrcode.react";
+import ConsentChainView from "./ConsentChainView";
 
 const MedicinePassport = () => {
   const [passports, setPassports] = useState<any[]>([]);
@@ -224,6 +225,8 @@ const MedicinePassport = () => {
                   )}
                 </div>
               )}
+
+              <ConsentChainView consentChain={selectedPassport.consentChain} />
 
               {(selectedPassport.status === "Completed" || selectedPassport.status === "Disposed") && (
                 <div className="bg-gray-100 p-3 rounded-xl text-center">
