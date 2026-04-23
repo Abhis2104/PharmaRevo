@@ -20,41 +20,23 @@ const DonationList: React.FC<DonationListProps> = ({ refreshTrigger }) => {
   }, []);
 
   const fetchDonations = async () => {
-    if (!currentUser) {
-      console.log("No current user");
-      return;
-    }
-    
+    if (!currentUser) return;
     setLoading(true);
     try {
-      console.log("Fetching donations for user:", currentUser.uid);
-      
-      // Try without orderBy first to avoid index issues
       const q = query(
         collection(db, "donations"),
         where("donorId", "==", currentUser.uid)
       );
-      
       const querySnapshot = await getDocs(q);
-      const donationData = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          // Convert timestamp back to readable date if needed
-          createdAt: data.createdAt
-        };
-      });
-      
-      // Sort by createdAt in JavaScript
-      donationData.sort((a, b) => {
+      const donationData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      donationData.sort((a: any, b: any) => {
         const aTime = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt).getTime();
         const bTime = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt).getTime();
-        return bTime - aTime; // Descending order
+        return bTime - aTime;
       });
-      
-      console.log("Fetched donations:", donationData.length, "items");
-      console.log("First donation:", donationData[0]);
       setDonations(donationData);
     } catch (error) {
       console.error("Error fetching donations:", error);
@@ -65,17 +47,9 @@ const DonationList: React.FC<DonationListProps> = ({ refreshTrigger }) => {
 
   useEffect(() => {
     if (currentUser) {
-      console.log("DonationList: refreshTrigger changed to", refreshTrigger);
       fetchDonations();
     }
   }, [refreshTrigger, currentUser]);
-  
-  useEffect(() => {
-    if (currentUser) {
-      console.log("DonationList: Component mounted with user");
-      fetchDonations();
-    }
-  }, [currentUser]);
 
   return (
     <div className="bg-white shadow-xl rounded-2xl p-6 border">
