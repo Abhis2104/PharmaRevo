@@ -10,6 +10,9 @@ interface ConsentEntry {
 
 interface ConsentChainViewProps {
   consentChain?: ConsentEntry[];
+  donationId?: string;
+  donorId?: string;
+  createdAt?: number;
 }
 
 const STAGE_ICONS: Record<string, string> = {
@@ -26,8 +29,21 @@ const STAGE_COLORS: Record<string, string> = {
 
 const ALL_STAGES = ["Donor Consent", "NGO/Hospital Acceptance", "Patient Receipt (Anonymous)"];
 
-const ConsentChainView: React.FC<ConsentChainViewProps> = ({ consentChain = [] }) => {
-  const completedStages = new Set(consentChain.map(e => e.stage));
+const ConsentChainView: React.FC<ConsentChainViewProps> = ({ consentChain = [], donationId, donorId, createdAt }) => {
+  // For old passports with no consentChain stored: if passport has a donationId,
+  // the donor already consented when they submitted the donation — treat it as done.
+  const effectiveChain: ConsentEntry[] = [...consentChain];
+  const hasDonorConsent = effectiveChain.some(e => e.stage === "Donor Consent");
+  if (!hasDonorConsent && donationId) {
+    effectiveChain.unshift({
+      stage: "Donor Consent",
+      actor: donorId || "donor",
+      actorLabel: "Donor",
+      timestamp: createdAt || Date.now(),
+      note: "Donor submitted this medicine for redistribution (consent recorded at donation time)."
+    });
+  }
+  const completedStages = new Set(effectiveChain.map(e => e.stage));
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 border border-white/20 shadow-lg space-y-4">
@@ -35,13 +51,13 @@ const ConsentChainView: React.FC<ConsentChainViewProps> = ({ consentChain = [] }
         <span className="text-xl">🔗</span>
         <h4 className="font-bold text-gray-800 text-lg">Consent-to-Care Chain</h4>
         <span className="ml-auto text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-          {consentChain.length}/{ALL_STAGES.length} steps
+          {effectiveChain.length}/{ALL_STAGES.length} steps
         </span>
       </div>
 
       <div className="space-y-3">
         {ALL_STAGES.map((stage, i) => {
-          const entry = consentChain.find(e => e.stage === stage);
+          const entry = effectiveChain.find(e => e.stage === stage);
           const done = completedStages.has(stage);
           return (
             <div key={stage} className="flex items-start space-x-3">
@@ -75,7 +91,7 @@ const ConsentChainView: React.FC<ConsentChainViewProps> = ({ consentChain = [] }
         })}
       </div>
 
-      {consentChain.length === ALL_STAGES.length && (
+      {effectiveChain.length === ALL_STAGES.length && (
         <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-800 font-semibold text-center">
           ✅ Full Consent Chain Complete — Ethically Verified
         </div>

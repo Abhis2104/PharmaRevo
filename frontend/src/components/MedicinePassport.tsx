@@ -226,7 +226,12 @@ const MedicinePassport = () => {
                 </div>
               )}
 
-              <ConsentChainView consentChain={selectedPassport.consentChain} />
+              <ConsentChainView
+                consentChain={selectedPassport.consentChain}
+                donationId={selectedPassport.donationId}
+                donorId={selectedPassport.donorId}
+                createdAt={selectedPassport.createdAt}
+              />
 
               {(selectedPassport.status === "Completed" || selectedPassport.status === "Disposed") && (
                 <div className="bg-gray-100 p-3 rounded-xl text-center">

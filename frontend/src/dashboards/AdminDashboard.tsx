@@ -91,6 +91,15 @@ const AdminDashboard = () => {
 
   const createPassport = async (donation: any, donationId: string) => {
     const passportId = `PP-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    const donorConsentChain = donation.consentChain && donation.consentChain.length > 0
+      ? donation.consentChain
+      : [{
+          stage: "Donor Consent",
+          actor: donation.donorId || "donor",
+          actorLabel: "Donor",
+          timestamp: donation.createdAt || Date.now(),
+          note: "Donor submitted this medicine for ethical redistribution."
+        }];
     await addDoc(collection(db, "medicine_passports"), {
       passportId,
       donationId,
@@ -102,6 +111,7 @@ const AdminDashboard = () => {
       donorId: donation.donorId || null,
       status: "Verified",
       createdAt: Date.now(),
+      consentChain: donorConsentChain,
       timeline: [
         { action: "Passport Created", timestamp: Date.now(), note: "Medicine donated and passport issued" },
         { action: "Verified by Admin", timestamp: Date.now(), note: "Medicine quality verified by PharmaRevo admin" }

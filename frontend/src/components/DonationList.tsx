@@ -25,15 +25,18 @@ const DonationList: React.FC<DonationListProps> = ({ refreshTrigger }) => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
     try {
-      // Fetch ALL donations then filter client-side
-      // This handles cases where donorId may be uid OR email
       const snapshot = await getDocs(collection(db, "donations"));
       const all = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      const mine = all.filter(d =>
-        d.donorId === user.uid ||
-        d.donorId === user.email ||
-        d.donorEmail === user.email
-      );
+      const mine = all.filter(d => {
+        // Match by uid, email stored as donorId, or donorEmail field
+        if (d.donorId === user.uid) return true;
+        if (d.donorId === user.email) return true;
+        if (d.donorEmail && d.donorEmail === user.email) return true;
+        // Old donations: source is individual and no donorId stored — show all individual donations for logged-in user
+        // since there's no other way to identify the owner
+        if (!d.donorId && !d.donorEmail && d.source === "individual") return true;
+        return false;
+      });
       mine.sort((a, b) => {
         const aTime = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt || 0).getTime();
         const bTime = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt || 0).getTime();

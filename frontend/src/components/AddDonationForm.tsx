@@ -112,6 +112,7 @@ const AddDonationForm: React.FC<AddDonationFormProps> = ({ onDonationAdded }) =>
         },
         contactNumber: contactNumber.trim(),
         donorId: currentUser.uid,
+        donorEmail: currentUser.email,
         consentChain: [
           {
             stage: "Donor Consent",
