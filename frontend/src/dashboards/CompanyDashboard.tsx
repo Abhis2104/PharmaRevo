@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import ShortageAlerts from "../components/ShortageAlerts";
 
 const CompanyDashboard = () => {
   const [activeTab, setActiveTab] = useState("batch");
@@ -124,7 +125,8 @@ const CompanyDashboard = () => {
     { id: "redistribution", label: "🔁 Track Redistribution", icon: "🔁" },
     { id: "disposal", label: "♻️ Disposal Request", icon: "♻️" },
     { id: "csr", label: "📈 CSR Analytics", icon: "📈" },
-    { id: "invoices", label: "🧾 Invoices", icon: "🧾" }
+    { id: "invoices", label: "🧾 Invoices", icon: "🧾" },
+    { id: "alerts", label: "🚨 Shortage Alerts", icon: "🚨" }
   ];
 
   const renderBatchStock = () => (
@@ -500,6 +502,8 @@ const CompanyDashboard = () => {
             </div>
           </div>
         );
+      case "alerts":
+        return <ShortageAlerts role="company" />;
       default:
         return null;
     }

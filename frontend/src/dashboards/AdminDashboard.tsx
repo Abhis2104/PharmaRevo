@@ -5,6 +5,7 @@ import { db } from "../firebase";
 import DeliveryManager from "../components/DeliveryManager";
 import MedicinePassport from "../components/MedicinePassport";
 import HealthGapIntelligence from "../components/HealthGapIntelligence";
+import ShortageAlerts from "../components/ShortageAlerts";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -203,7 +204,8 @@ const AdminDashboard = () => {
     { id: "sales", label: "💰 Approved Sales", icon: "💰" },
     { id: "inventory", label: "📦 Inventory Control", icon: "📦" },
     { id: "analytics", label: "📈 Analytics", icon: "📈" },
-    { id: "chgi", label: "🧠 Health Gap", icon: "🧠" }
+    { id: "chgi", label: "🧠 Health Gap", icon: "🧠" },
+    { id: "alerts", label: "🚨 Shortage Alerts", icon: "🚨" }
   ];
 
   const openDetailModal = (donation: any) => {
@@ -1473,6 +1475,7 @@ const AdminDashboard = () => {
             {activeTab === "inventory" && renderInventoryControl()}
             {activeTab === "analytics" && renderAnalytics()}
             {activeTab === "chgi" && <HealthGapIntelligence />}
+            {activeTab === "alerts" && <ShortageAlerts role="admin" />}
           </div>
         )}
       </div>

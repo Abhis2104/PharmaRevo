@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import ShortageAlerts from "../components/ShortageAlerts";
 
 const PharmacyDashboard = () => {
   const [activeTab, setActiveTab] = useState("upload");
@@ -122,7 +123,8 @@ const PharmacyDashboard = () => {
     { id: "upload", label: "📋 Upload Stock", icon: "📋" },
     { id: "status", label: "🔍 Verification Status", icon: "🔍" },
     { id: "medicines", label: "💰 Available Medicines", icon: "💰" },
-    { id: "reports", label: "📊 Reports", icon: "📊" }
+    { id: "reports", label: "📊 Reports", icon: "📊" },
+    { id: "alerts", label: "🚨 Shortage Alerts", icon: "🚨" }
   ];
 
   const renderUploadStock = () => (
@@ -389,6 +391,8 @@ const PharmacyDashboard = () => {
             </div>
           </div>
         );
+      case "alerts":
+        return <ShortageAlerts role="pharmacy" />;
       default:
         return null;
     }

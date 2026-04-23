@@ -3,6 +3,7 @@ import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import PassportScanner from "../components/PassportScanner";
 import HealthGapIntelligence from "../components/HealthGapIntelligence";
+import ShortageAlerts from "../components/ShortageAlerts";
 
 const NGODashboard = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -309,7 +310,8 @@ const NGODashboard = () => {
     { id: "mypassports", label: "🔒 My Passports", icon: "🔒" },
     { id: "reports", label: "🧾 Usage Reports", icon: "🧾" },
     { id: "support", label: "💬 Support", icon: "💬" },
-    { id: "chgi", label: "🧠 Health Gap", icon: "🧠" }
+    { id: "chgi", label: "🧠 Health Gap", icon: "🧠" },
+    { id: "alerts", label: "🚨 Shortage Alerts", icon: "🚨" }
   ];
 
   const renderSearchMedicines = () => (
@@ -646,6 +648,8 @@ const NGODashboard = () => {
         );
       case "chgi":
         return <HealthGapIntelligence />;
+      case "alerts":
+        return <ShortageAlerts role="ngo" />;
       default:
         return null;
     }

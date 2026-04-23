@@ -4,10 +4,12 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 import AddDonationForm from "../components/AddDonationForm";
 import DonationList from "../components/DonationList";
+import ShortageAlerts from "../components/ShortageAlerts";
 
 const DonorDashboard = () => {
   const navigate = useNavigate();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState<"donations" | "alerts">("donations");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -126,7 +128,23 @@ const DonorDashboard = () => {
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Tab Nav */}
+        <div className="flex gap-3 mb-8">
+          {(["donations", "alerts"] as const).map(t => (
+            <button key={t} onClick={() => setActiveTab(t)}
+              className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 capitalize ${
+                activeTab === t
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                  : "bg-white/80 text-gray-700 hover:bg-white hover:shadow-md"
+              }`}>
+              {t === "donations" ? "📋 My Donations" : "🚨 Shortage Alerts"}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "alerts" ? (
+          <ShortageAlerts role="donor" />
+        ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* Add Donation Form */}
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
@@ -164,6 +182,8 @@ const DonorDashboard = () => {
             </div>
           </div>
         </div>
+
+        )}
 
         {/* Impact Section */}
         <div className="mt-12 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl p-8 text-white">
