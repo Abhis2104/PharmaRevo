@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import PassportScanner from "../components/PassportScanner";
+import HealthGapIntelligence from "../components/HealthGapIntelligence";
 
 const NGODashboard = () => {
   const [activeTab, setActiveTab] = useState("profile");
@@ -307,7 +308,8 @@ const NGODashboard = () => {
     { id: "passport", label: "🔏 Scan Passport", icon: "🔏" },
     { id: "mypassports", label: "🔒 My Passports", icon: "🔒" },
     { id: "reports", label: "🧾 Usage Reports", icon: "🧾" },
-    { id: "support", label: "💬 Support", icon: "💬" }
+    { id: "support", label: "💬 Support", icon: "💬" },
+    { id: "chgi", label: "🧠 Health Gap", icon: "🧠" }
   ];
 
   const renderSearchMedicines = () => (
@@ -642,6 +644,8 @@ const NGODashboard = () => {
             </div>
           </div>
         );
+      case "chgi":
+        return <HealthGapIntelligence />;
       default:
         return null;
     }
