@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { db, auth } from "../firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 interface DonationListProps {
@@ -9,35 +9,37 @@ interface DonationListProps {
 
 const DonationList: React.FC<DonationListProps> = ({ refreshTrigger }) => {
   const [donations, setDonations] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [authReady, setAuthReady] = useState(false);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
+      setAuthReady(true);
     });
     return () => unsubscribe();
   }, []);
 
-  const fetchDonations = async () => {
-    if (!currentUser) return;
+  const fetchDonations = async (user: any) => {
+    if (!user) { setLoading(false); return; }
     setLoading(true);
     try {
-      const q = query(
-        collection(db, "donations"),
-        where("donorId", "==", currentUser.uid)
+      // Fetch ALL donations then filter client-side
+      // This handles cases where donorId may be uid OR email
+      const snapshot = await getDocs(collection(db, "donations"));
+      const all = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      const mine = all.filter(d =>
+        d.donorId === user.uid ||
+        d.donorId === user.email ||
+        d.donorEmail === user.email
       );
-      const querySnapshot = await getDocs(q);
-      const donationData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      donationData.sort((a: any, b: any) => {
-        const aTime = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt).getTime();
-        const bTime = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt).getTime();
+      mine.sort((a, b) => {
+        const aTime = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt || 0).getTime();
+        const bTime = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt || 0).getTime();
         return bTime - aTime;
       });
-      setDonations(donationData);
+      setDonations(mine);
     } catch (error) {
       console.error("Error fetching donations:", error);
     } finally {
@@ -46,17 +48,15 @@ const DonationList: React.FC<DonationListProps> = ({ refreshTrigger }) => {
   };
 
   useEffect(() => {
-    if (currentUser) {
-      fetchDonations();
-    }
-  }, [refreshTrigger, currentUser]);
+    if (authReady) fetchDonations(currentUser);
+  }, [authReady, refreshTrigger]);
 
   return (
     <div className="bg-white shadow-xl rounded-2xl p-6 border">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800">My Donations</h2>
         <button
-          onClick={fetchDonations}
+          onClick={() => fetchDonations(currentUser)}
           disabled={loading}
           className="px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-sm"
         >
