@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 import PassportScanner from "../components/PassportScanner";
 import HealthGapIntelligence from "../components/HealthGapIntelligence";
 import ShortageAlerts from "../components/ShortageAlerts";
@@ -12,6 +13,7 @@ const NGODashboard = () => {
   const [myPassports, setMyPassports] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [profileData, setProfileData] = useState({
     organizationName: "",
@@ -26,37 +28,44 @@ const NGODashboard = () => {
   });
 
   useEffect(() => {
-    fetchData();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) fetchData(user);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (user?: any) => {
+    const uid = (user || currentUser)?.uid;
+    if (!uid) return;
     setLoading(true);
     try {
-      const medicinesQuery = query(
-        collection(db, "donations"),
-        where("status", "==", "Approved")
-      );
-      const medicinesSnapshot = await getDocs(medicinesQuery);
-      const medicinesData = medicinesSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setAvailableMedicines(medicinesData);
+      const medicinesSnapshot = await getDocs(query(collection(db, "donations"), where("status", "==", "Approved")));
+      setAvailableMedicines(medicinesSnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
 
-      if (auth.currentUser) {
-        const requestsQuery = query(
-          collection(db, "ngo_requests"),
-          where("ngoId", "==", auth.currentUser.uid)
-        );
-        const requestsSnapshot = await getDocs(requestsQuery);
-        setMyRequests(requestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const requestsSnapshot = await getDocs(query(collection(db, "ngo_requests"), where("ngoId", "==", uid)));
+      const requests = requestsSnapshot.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      requests.sort((a, b) => (b.requestDate || 0) - (a.requestDate || 0));
+      setMyRequests(requests);
 
-        const passportsQuery = query(
-          collection(db, "medicine_passports"),
-          where("ngoId", "==", auth.currentUser.uid)
-        );
-        const passportsSnapshot = await getDocs(passportsQuery);
-        setMyPassports(passportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const passportsSnapshot = await getDocs(query(collection(db, "medicine_passports"), where("ngoId", "==", uid)));
+      setMyPassports(passportsSnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+
+      // Load saved profile
+      const profileSnapshot = await getDocs(query(collection(db, "ngo_profiles"), where("userId", "==", uid)));
+      if (!profileSnapshot.empty) {
+        const saved = profileSnapshot.docs[profileSnapshot.docs.length - 1].data();
+        setProfileData({
+          organizationName: saved.organizationName || "",
+          organizationType: saved.organizationType || "NGO",
+          contactNumber: saved.contactNumber || "",
+          email: saved.email || "",
+          address: saved.address || "",
+          city: saved.city || "",
+          pinCode: saved.pinCode || "",
+          registrationNumber: saved.registrationNumber || "",
+          contactPerson: saved.contactPerson || ""
+        });
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -84,9 +93,8 @@ const NGODashboard = () => {
   };
 
   const submitRequest = async () => {
-    if (!auth.currentUser || cart.length === 0) return;
+    if (!currentUser || cart.length === 0) return;
 
-    // Check if profile is complete
     if (!profileData.organizationName || !profileData.contactNumber || !profileData.email || !profileData.address) {
       alert("Please complete your profile first before submitting requests!");
       setActiveTab("profile");
@@ -96,12 +104,11 @@ const NGODashboard = () => {
     setLoading(true);
     try {
       await addDoc(collection(db, "ngo_requests"), {
-        ngoId: auth.currentUser.uid,
+        ngoId: currentUser.uid,
         items: cart,
         status: "Pending",
-        requestDate: new Date().getTime(),
+        requestDate: Date.now(),
         totalItems: cart.length,
-        // Contact information
         organizationName: profileData.organizationName,
         organizationType: profileData.organizationType,
         contactNumber: profileData.contactNumber,
@@ -112,45 +119,37 @@ const NGODashboard = () => {
         registrationNumber: profileData.registrationNumber,
         contactPerson: profileData.contactPerson
       });
-
       setCart([]);
-      alert("Request submitted successfully!");
-      fetchData();
+      alert("✅ Request submitted successfully! Admin will review it shortly.");
+      fetchData(currentUser);
     } catch (error) {
       console.error("Error submitting request:", error);
-      alert("Error submitting request");
+      alert("Error submitting request. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const saveProfile = async () => {
-    if (!auth.currentUser) return;
-
-    // Validate required fields
+    if (!currentUser) return;
     if (!profileData.organizationName || !profileData.contactNumber || !profileData.email) {
       alert("Please fill all required fields!");
       return;
     }
-
-    // Validate contact number
     if (!/^[0-9]{10}$/.test(profileData.contactNumber)) {
       alert("Please enter a valid 10-digit contact number");
       return;
     }
-
-    // Validate email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email)) {
       alert("Please enter a valid email address");
       return;
     }
-
     setLoading(true);
     try {
       await addDoc(collection(db, "ngo_profiles"), {
-        userId: auth.currentUser.uid,
+        userId: currentUser.uid,
         ...profileData,
-        updatedAt: new Date().getTime()
+        updatedAt: Date.now()
       });
       alert("Profile saved successfully!");
     } catch (error) {
@@ -431,23 +430,30 @@ const NGODashboard = () => {
       case "status":
         return (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-            <h3 className="text-xl font-bold mb-6">Request Status</h3>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">My Request Status</h3>
+              <button onClick={() => fetchData(currentUser)} className="px-4 py-2 bg-purple-600 text-white rounded-xl text-sm font-semibold hover:bg-purple-700 transition-all">
+                🔄 Refresh
+              </button>
+            </div>
             <div className="space-y-4">
               {myRequests.map(request => (
                 <div key={request.id} className="border-2 border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-300">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-bold text-gray-800">Request #{request.id.slice(-6)}</h4>
-                      <p className="text-gray-600">Date: {new Date(request.requestDate).toLocaleDateString()}</p>
-                      <p className="text-gray-600">Items: {request.totalItems}</p>
-                      <div className="mt-2">
-                        <h5 className="font-semibold text-sm text-gray-700">Requested Medicines:</h5>
-                        <ul className="text-sm text-gray-600 mt-1">
-                          {request.medicines?.map((med: any, index: number) => (
-                            <li key={index}>• {med.medicineName} (Qty: {med.requestedQuantity})</li>
-                          ))}
-                        </ul>
-                      </div>
+                      <p className="text-gray-600 text-sm">Date: {new Date(request.requestDate).toLocaleDateString()}</p>
+                      <p className="text-gray-600 text-sm">Total Items: {request.totalItems || request.items?.length || 0}</p>
+                      {request.items?.length > 0 && (
+                        <div className="mt-2">
+                          <p className="font-semibold text-sm text-gray-700 mb-1">Medicines Requested:</p>
+                          <ul className="text-sm text-gray-600 space-y-0.5">
+                            {request.items.map((med: any, index: number) => (
+                              <li key={index}>• {med.medicineName} (Qty: {med.requestedQuantity})</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                     <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
                       request.status === "Pending" ? "bg-yellow-100 text-yellow-800" :
@@ -460,11 +466,11 @@ const NGODashboard = () => {
                   </div>
                 </div>
               ))}
-              
               {myRequests.length === 0 && (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📋</div>
                   <p className="text-gray-600 text-lg">No requests submitted yet.</p>
+                  <p className="text-gray-500 text-sm">Add medicines to cart and submit a request.</p>
                 </div>
               )}
             </div>
@@ -473,8 +479,8 @@ const NGODashboard = () => {
       case "passport":
         return (
           <PassportScanner
-            ngoName={profileData.organizationName || "NGO"}
-            ngoId={auth.currentUser?.uid || ""}
+            ngoName={profileData.organizationName || currentUser?.email || "NGO"}
+            ngoId={currentUser?.uid || ""}
           />
         );
       case "mypassports":
