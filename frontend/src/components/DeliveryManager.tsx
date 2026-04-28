@@ -1,399 +1,291 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, doc, updateDoc, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
-import SampleDataCreator from './SampleDataCreator';
 
-interface Medicine {
-  id: string;
-  medicineName: string;
-  donorId: string;
-  deliveryStatus: string;
-  source?: string;
-  pickupAddress: {
-    address: string;
-    city: string;
-    pinCode: string;
-  };
-  assignedVolunteerId?: string;
-}
+// ─── Status Definitions ───────────────────────────────────────────────────────
 
-interface Volunteer {
-  id: string;
-  name: string;
-  phone: string;
-  vehicleType: string;
-  availableAreas: string[];
-  isActive: boolean;
-}
+const PICKUP_STEPS = [
+  { key: 'pending_pickup',      label: 'Pending Pickup',      icon: '⏳' },
+  { key: 'picked_up',           label: 'Picked Up',           icon: '📦' },
+  { key: 'packed',              label: 'Packed',              icon: '🗃️' },
+  { key: 'out_for_delivery',    label: 'Out for Delivery',    icon: '🚚' },
+  { key: 'delivered',           label: 'Delivered',           icon: '✅' },
+];
+
+const DROP_STEPS = [
+  { key: 'pending_dispatch',    label: 'Pending Dispatch',    icon: '⏳' },
+  { key: 'packed',              label: 'Packed',              icon: '🗃️' },
+  { key: 'shipped',             label: 'Shipped',             icon: '📮' },
+  { key: 'out_for_delivery',    label: 'Out for Delivery',    icon: '🚚' },
+  { key: 'delivered',           label: 'Delivered',           icon: '✅' },
+];
+
+const nextPickupStatus: Record<string, string> = {
+  pending_pickup:   'picked_up',
+  picked_up:        'packed',
+  packed:           'out_for_delivery',
+  out_for_delivery: 'delivered',
+};
+
+const nextDropStatus: Record<string, string> = {
+  pending_dispatch: 'packed',
+  packed:           'shipped',
+  shipped:          'out_for_delivery',
+  out_for_delivery: 'delivered',
+};
+
+// ─── Status Tracker UI ────────────────────────────────────────────────────────
+
+const StatusTracker: React.FC<{ steps: typeof PICKUP_STEPS; current: string }> = ({ steps, current }) => {
+  const currentIdx = steps.findIndex(s => s.key === current);
+  return (
+    <div className="flex items-center gap-1 flex-wrap mt-2">
+      {steps.map((step, i) => {
+        const done = i <= currentIdx;
+        const active = i === currentIdx;
+        return (
+          <React.Fragment key={step.key}>
+            <div className={`flex flex-col items-center`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all ${
+                done ? 'bg-green-500 border-green-500 text-white' :
+                'bg-gray-100 border-gray-300 text-gray-400'
+              } ${active ? 'ring-2 ring-green-300 scale-110' : ''}`}>
+                {done ? step.icon : <span className="text-xs font-bold">{i + 1}</span>}
+              </div>
+              <span className={`text-xs mt-0.5 text-center max-w-[60px] leading-tight ${done ? 'text-green-700 font-semibold' : 'text-gray-400'}`}>
+                {step.label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={`flex-1 h-0.5 min-w-[12px] mb-4 ${i < currentIdx ? 'bg-green-400' : 'bg-gray-200'}`} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const DeliveryManager: React.FC = () => {
-  const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [donations, setDonations] = useState<any[]>([]);
   const [ngoRequests, setNgoRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('pickup');
-  const [pickupSubTab, setPickupSubTab] = useState('donor');
-  const [dropSubTab, setDropSubTab] = useState('ngo');
+  const [activeTab, setActiveTab] = useState<'pickup' | 'drop'>('pickup');
+  const [pickupFilter, setPickupFilter] = useState<'all' | 'individual' | 'pharmacy' | 'company'>('all');
+  const [updating, setUpdating] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchPendingMedicines();
-    fetchActiveVolunteers();
+    // Live listener for approved donations
+    const unsubDonations = onSnapshot(
+      query(collection(db, 'donations'), where('status', '==', 'Approved')),
+      snap => setDonations(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    );
     fetchNgoRequests();
+    return () => unsubDonations();
   }, []);
-
-  const fetchPendingMedicines = async () => {
-    try {
-      const q = query(
-        collection(db, 'donations'),
-        where('status', '==', 'Approved')
-      );
-      
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const medicineList = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Medicine[];
-        
-        const pendingPickup = medicineList.filter(med => 
-          !med.deliveryStatus || med.deliveryStatus === 'pending_pickup'
-        );
-        
-        setMedicines(pendingPickup);
-      });
-
-      return unsubscribe;
-    } catch (error) {
-      console.error('Error fetching pending medicines:', error);
-      setMedicines([]);
-    }
-  };
-
-  const fetchActiveVolunteers = async () => {
-    try {
-      const snapshot = await getDocs(collection(db, 'volunteers'));
-      const volunteerList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Volunteer[];
-      console.log('Fetched volunteers:', volunteerList);
-      setVolunteers(volunteerList.filter(vol => vol.isActive !== false));
-    } catch (error) {
-      console.error('Error fetching volunteers:', error);
-    }
-  };
 
   const fetchNgoRequests = async () => {
     try {
-      const q = query(
-        collection(db, 'ngo_requests'),
-        where('status', '==', 'Approved')
-      );
-      
-      const snapshot = await getDocs(q);
-      const requestList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setNgoRequests(requestList);
-    } catch (error) {
-      console.error('Error fetching NGO requests:', error);
-    }
+      const snap = await getDocs(query(collection(db, 'ngo_requests'), where('status', '==', 'Approved')));
+      setNgoRequests(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (e) { console.error(e); }
   };
 
-  const assignVolunteer = async (medicineId: string, volunteerId: string) => {
-    setLoading(true);
+  const advancePickup = async (donationId: string, currentStatus: string) => {
+    const next = nextPickupStatus[currentStatus];
+    if (!next) return;
+    setUpdating(donationId);
     try {
-      await updateDoc(doc(db, 'donations', medicineId), {
-        assignedVolunteerId: volunteerId,
-        deliveryStatus: 'assigned_for_pickup',
-        updatedAt: new Date()
+      await updateDoc(doc(db, 'donations', donationId), {
+        deliveryStatus: next,
+        updatedAt: Date.now(),
+        ...(next === 'delivered' ? { deliveredAt: Date.now() } : {}),
       });
+    } catch (e) { alert('Error updating status'); }
+    setUpdating(null);
+  };
 
-      await addDoc(collection(db, 'deliveries'), {
-        medicineId,
-        volunteerId,
-        type: 'pickup',
-        status: 'assigned',
-        assignedAt: new Date(),
-        completedAt: null
+  const advanceDrop = async (requestId: string, currentStatus: string) => {
+    const next = nextDropStatus[currentStatus];
+    if (!next) return;
+    setUpdating(requestId);
+    try {
+      await updateDoc(doc(db, 'ngo_requests', requestId), {
+        deliveryStatus: next,
+        updatedAt: Date.now(),
+        ...(next === 'delivered' ? { deliveredAt: Date.now() } : {}),
       });
-
-      alert('Volunteer assigned successfully!');
-    } catch (error) {
-      console.error('Error assigning volunteer:', error);
-      alert('Failed to assign volunteer');
-    }
-    setLoading(false);
+      // Refresh
+      fetchNgoRequests();
+    } catch (e) { alert('Error updating status'); }
+    setUpdating(null);
   };
 
-  const getAvailableVolunteers = (pinCode: string) => {
-    if (!pinCode || !volunteers.length) return [];
-    return volunteers.filter(vol => 
-      vol.availableAreas && vol.availableAreas.includes(pinCode)
-    );
-  };
+  // ── Pickup Tab ──────────────────────────────────────────────────────────────
 
-  const getFilteredMedicines = () => {
-    return medicines.filter(med => {
-      if (pickupSubTab === 'donor') return !med.source || med.source === 'individual';
-      if (pickupSubTab === 'pharmacy') return med.source === 'pharmacy';
-      if (pickupSubTab === 'company') return med.source === 'company';
-      return true;
-    });
-  };
+  const filteredDonations = donations.filter(d => {
+    if (pickupFilter === 'all') return true;
+    if (pickupFilter === 'individual') return !d.source || d.source === 'individual';
+    return d.source === pickupFilter;
+  });
 
-  const renderPickupSection = () => {
-    const filteredMedicines = getFilteredMedicines();
-    
-    return (
-      <div className="space-y-4">
-        {/* Pickup Sub-tabs */}
-        <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setPickupSubTab('donor')}
-            className={`px-4 py-2 rounded-md font-medium transition-all ${
-              pickupSubTab === 'donor'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            🤝 Donor ({medicines.filter(m => !m.source || m.source === 'individual').length})
+  const renderPickup = () => (
+    <div className="space-y-4">
+      {/* Filter */}
+      <div className="flex gap-2 flex-wrap">
+        {[
+          { key: 'all', label: 'All', count: donations.length },
+          { key: 'individual', label: '🤝 Donor', count: donations.filter(d => !d.source || d.source === 'individual').length },
+          { key: 'pharmacy', label: '🏪 Pharmacy', count: donations.filter(d => d.source === 'pharmacy').length },
+          { key: 'company', label: '🏢 Company', count: donations.filter(d => d.source === 'company').length },
+        ].map(f => (
+          <button key={f.key} onClick={() => setPickupFilter(f.key as any)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${pickupFilter === f.key ? 'bg-blue-600 text-white shadow' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+            {f.label} ({f.count})
           </button>
-          <button
-            onClick={() => setPickupSubTab('pharmacy')}
-            className={`px-4 py-2 rounded-md font-medium transition-all ${
-              pickupSubTab === 'pharmacy'
-                ? 'bg-purple-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            🏪 Pharmacy ({medicines.filter(m => m.source === 'pharmacy').length})
-          </button>
-          <button
-            onClick={() => setPickupSubTab('company')}
-            className={`px-4 py-2 rounded-md font-medium transition-all ${
-              pickupSubTab === 'company'
-                ? 'bg-green-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            🏢 Company ({medicines.filter(m => m.source === 'company').length})
-          </button>
+        ))}
+      </div>
+
+      {filteredDonations.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          <div className="text-5xl mb-3">📦</div>
+          <p>No approved donations pending pickup.</p>
         </div>
-
-        {/* Pickup Items */}
-        <div className="space-y-4">
-          {filteredMedicines.map((medicine) => {
-            const pinCode = medicine.pickupAddress?.pinCode || medicine.pinCode || '';
-            const availableVolunteers = getAvailableVolunteers(pinCode);
-            
-            return (
-              <div key={medicine.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-lg">{medicine.medicineName}</h3>
-                    <p className="text-gray-600">
-                      Pickup: {medicine.pickupAddress?.address || medicine.address || 'Address not available'}, {medicine.pickupAddress?.city || medicine.city || 'City not available'} - {pinCode || 'Pin not available'}
-                    </p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <span className="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
-                        {(medicine.deliveryStatus || 'pending_pickup').replace('_', ' ').toUpperCase()}
-                      </span>
-                      <span className={`px-2 py-1 rounded text-sm ${
-                        medicine.source === 'pharmacy' ? 'bg-purple-100 text-purple-800' :
-                        medicine.source === 'company' ? 'bg-green-100 text-green-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {medicine.source === 'pharmacy' ? '🏪 Pharmacy' :
-                         medicine.source === 'company' ? '🏢 Company' : '🤝 Donor'}
-                      </span>
-                    </div>
+      ) : (
+        filteredDonations.map(donation => {
+          const status = donation.deliveryStatus || 'pending_pickup';
+          const isDone = status === 'delivered';
+          const next = nextPickupStatus[status];
+          return (
+            <div key={donation.id} className={`border-2 rounded-2xl p-5 transition-all ${isDone ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white hover:shadow-md'}`}>
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="font-bold text-gray-800 text-lg">{donation.medicineName}</h3>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                      donation.source === 'pharmacy' ? 'bg-purple-100 text-purple-700' :
+                      donation.source === 'company' ? 'bg-green-100 text-green-700' :
+                      'bg-blue-100 text-blue-700'
+                    }`}>
+                      {donation.source === 'pharmacy' ? '🏪 Pharmacy' : donation.source === 'company' ? '🏢 Company' : '🤝 Donor'}
+                    </span>
                   </div>
-                  
-                  <div className="flex flex-col space-y-2">
-                    <div className="text-xs text-gray-500 mb-1">
-                      Total volunteers: {volunteers.length} | Available: {availableVolunteers.length}
-                    </div>
-                    {volunteers.length === 0 ? (
-                      <span className="text-orange-500 text-sm">No volunteers registered</span>
-                    ) : availableVolunteers.length > 0 ? (
-                      <select 
-                        className="border border-gray-300 rounded px-3 py-2"
-                        onChange={(e) => e.target.value && assignVolunteer(medicine.id, e.target.value)}
-                        disabled={loading}
-                      >
-                        <option value="">Select Volunteer</option>
-                        {availableVolunteers.map((volunteer) => (
-                          <option key={volunteer.id} value={volunteer.id}>
-                            {volunteer.name} ({volunteer.vehicleType})
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div>
-                        <span className="text-red-500 text-sm block">No volunteers for pin: {pinCode}</span>
-                        <select className="border border-gray-300 rounded px-3 py-2 mt-1 text-sm">
-                          <option>All volunteers:</option>
-                          {volunteers.map((vol) => (
-                            <option key={vol.id} disabled>
-                              {vol.name} - Areas: {vol.availableAreas?.join(', ') || 'None'}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray-600">
+                    📍 {donation.pickupAddress?.address || donation.address || 'N/A'}, {donation.pickupAddress?.city || donation.city || ''} — {donation.pickupAddress?.pinCode || donation.pinCode || ''}
+                  </p>
+                  <p className="text-sm text-gray-500">📦 Qty: {donation.quantity} | 📅 Expiry: {donation.expiryDate}</p>
+                  <StatusTracker steps={PICKUP_STEPS} current={status} />
+                </div>
+                <div className="flex flex-col gap-2 min-w-[160px]">
+                  {!isDone && next && (
+                    <button
+                      onClick={() => advancePickup(donation.id, status)}
+                      disabled={updating === donation.id}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+                    >
+                      {updating === donation.id ? 'Updating...' : `→ Mark as ${PICKUP_STEPS.find(s => s.key === next)?.label}`}
+                    </button>
+                  )}
+                  {isDone && <span className="text-green-600 font-semibold text-sm text-center">✅ Pickup Complete</span>}
                 </div>
               </div>
-            );
-          })}
-          
-          {filteredMedicines.length === 0 && (
-            <p className="text-gray-500 text-center py-8">No medicines pending pickup from {pickupSubTab}s</p>
-          )}
-        </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+
+  // ── Drop Tab ────────────────────────────────────────────────────────────────
+
+  const renderDrop = () => (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-gray-500">{ngoRequests.length} approved NGO requests</p>
+        <button onClick={fetchNgoRequests} className="text-sm text-blue-600 hover:underline">🔄 Refresh</button>
       </div>
-    );
-  };
 
-  const renderDropSection = () => {
-    return (
-      <div className="space-y-4">
-        {/* Drop Sub-tabs */}
-        <div className="flex space-x-2 bg-gray-100 p-1 rounded-lg">
-          <button
-            onClick={() => setDropSubTab('ngo')}
-            className={`px-4 py-2 rounded-md font-medium transition-all ${
-              dropSubTab === 'ngo'
-                ? 'bg-pink-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            🏥 NGO/Hospital ({ngoRequests.length})
-          </button>
-          <button
-            onClick={() => setDropSubTab('need')}
-            className={`px-4 py-2 rounded-md font-medium transition-all ${
-              dropSubTab === 'need'
-                ? 'bg-orange-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            🆘 Emergency Need (0)
-          </button>
+      {ngoRequests.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          <div className="text-5xl mb-3">🚚</div>
+          <p>No approved NGO requests for delivery.</p>
+          <p className="text-xs mt-1">Approve NGO requests from the NGO Requests tab first.</p>
         </div>
-
-        {/* Drop Items */}
-        <div className="space-y-4">
-          {dropSubTab === 'ngo' && ngoRequests.map((request) => {
-            const pinCode = request.deliveryPinCode || '';
-            const availableVolunteers = getAvailableVolunteers(pinCode);
-            
-            return (
-              <div key={request.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-lg">{request.organizationName}</h3>
-                    <p className="text-gray-600">
-                      Drop: {request.deliveryAddress || 'Address not available'}, {request.deliveryCity || 'City not available'} - {pinCode || 'Pin not available'}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Items: {request.items?.length || 0} medicines requested
-                    </p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
-                        APPROVED FOR DELIVERY
-                      </span>
-                      <span className="px-2 py-1 rounded text-sm bg-pink-100 text-pink-800">
-                        🏥 {request.organizationType || 'NGO/Hospital'}
-                      </span>
-                    </div>
+      ) : (
+        ngoRequests.map(request => {
+          const status = request.deliveryStatus || 'pending_dispatch';
+          const isDone = status === 'delivered';
+          const next = nextDropStatus[status];
+          return (
+            <div key={request.id} className={`border-2 rounded-2xl p-5 transition-all ${isDone ? 'border-green-200 bg-green-50' : 'border-gray-100 bg-white hover:shadow-md'}`}>
+              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="font-bold text-gray-800 text-lg">{request.organizationName}</h3>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-pink-100 text-pink-700">
+                      🏥 {request.organizationType || 'NGO'}
+                    </span>
                   </div>
-                  
-                  <div className="flex flex-col space-y-2">
-                    <div className="text-xs text-gray-500 mb-1">
-                      Total volunteers: {volunteers.length} | Available: {availableVolunteers.length}
-                    </div>
-                    {volunteers.length === 0 ? (
-                      <span className="text-orange-500 text-sm">No volunteers registered</span>
-                    ) : availableVolunteers.length > 0 ? (
-                      <select 
-                        className="border border-gray-300 rounded px-3 py-2"
-                        onChange={(e) => e.target.value && assignVolunteer(request.id, e.target.value)}
-                        disabled={loading}
-                      >
-                        <option value="">Select Volunteer</option>
-                        {availableVolunteers.map((volunteer) => (
-                          <option key={volunteer.id} value={volunteer.id}>
-                            {volunteer.name} ({volunteer.vehicleType})
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div>
-                        <span className="text-red-500 text-sm block">No volunteers for pin: {pinCode}</span>
-                        <select className="border border-gray-300 rounded px-3 py-2 mt-1 text-sm">
-                          <option>All volunteers:</option>
-                          {volunteers.map((vol) => (
-                            <option key={vol.id} disabled>
-                              {vol.name} - Areas: {vol.availableAreas?.join(', ') || 'None'}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
+                  <p className="text-sm text-gray-600">
+                    📍 {request.deliveryAddress || 'N/A'}, {request.deliveryCity || ''} — {request.deliveryPinCode || ''}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    📋 {request.items?.length || 0} medicines | 📞 {request.contactNumber || 'N/A'}
+                  </p>
+                  {request.items?.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Items: {request.items.map((i: any) => i.medicineName).join(', ')}
+                    </p>
+                  )}
+                  <StatusTracker steps={DROP_STEPS} current={status} />
+                </div>
+                <div className="flex flex-col gap-2 min-w-[160px]">
+                  {!isDone && next && (
+                    <button
+                      onClick={() => advanceDrop(request.id, status)}
+                      disabled={updating === request.id}
+                      className="bg-gradient-to-r from-pink-600 to-rose-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:shadow-lg transition-all disabled:opacity-50"
+                    >
+                      {updating === request.id ? 'Updating...' : `→ Mark as ${DROP_STEPS.find(s => s.key === next)?.label}`}
+                    </button>
+                  )}
+                  {isDone && <span className="text-green-600 font-semibold text-sm text-center">✅ Delivered</span>}
                 </div>
               </div>
-            );
-          })}
-          
-          {dropSubTab === 'need' && (
-            <p className="text-gray-500 text-center py-8">No emergency needs at the moment</p>
-          )}
-          
-          {dropSubTab === 'ngo' && ngoRequests.length === 0 && (
-            <p className="text-gray-500 text-center py-8">No approved NGO requests for delivery</p>
-          )}
-        </div>
-      </div>
-    );
-  };
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      <SampleDataCreator />
-      
-      <div className="p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-red-700 mb-6">Logistics Management</h2>
-        
-        {/* Main Tabs */}
-        <div className="flex space-x-4 mb-6">
-          <button
-            onClick={() => setActiveTab('pickup')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-              activeTab === 'pickup'
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            📦 Pickup Operations
-          </button>
-          <button
-            onClick={() => setActiveTab('drop')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-              activeTab === 'drop'
-                ? 'bg-pink-600 text-white shadow-lg'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            🚚 Drop Operations
-          </button>
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white">
+        <h2 className="text-2xl font-bold mb-1">🚚 Logistics Management</h2>
+        <p className="text-blue-100 text-sm">Track and advance pickup & delivery status for all medicines</p>
+        <div className="flex gap-4 mt-3 text-sm">
+          <span className="bg-white/20 px-3 py-1 rounded-full">{donations.length} Pickups</span>
+          <span className="bg-white/20 px-3 py-1 rounded-full">{ngoRequests.length} Drops</span>
         </div>
+      </div>
 
-        {/* Tab Content */}
-        {activeTab === 'pickup' && renderPickupSection()}
-        {activeTab === 'drop' && renderDropSection()}
+      {/* Tabs */}
+      <div className="flex gap-3">
+        <button onClick={() => setActiveTab('pickup')}
+          className={`px-6 py-3 rounded-xl font-semibold transition-all ${activeTab === 'pickup' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'}`}>
+          📦 Pickup Operations ({donations.length})
+        </button>
+        <button onClick={() => setActiveTab('drop')}
+          className={`px-6 py-3 rounded-xl font-semibold transition-all ${activeTab === 'drop' ? 'bg-pink-600 text-white shadow-lg' : 'bg-white/80 text-gray-700 hover:bg-white hover:shadow-md'}`}>
+          🚚 Drop Operations ({ngoRequests.length})
+        </button>
+      </div>
+
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
+        {activeTab === 'pickup' ? renderPickup() : renderDrop()}
       </div>
     </div>
   );

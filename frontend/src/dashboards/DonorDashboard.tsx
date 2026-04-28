@@ -1,15 +1,56 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 import { auth } from "../firebase";
 import AddDonationForm from "../components/AddDonationForm";
 import DonationList from "../components/DonationList";
 import ShortageAlerts from "../components/ShortageAlerts";
 
+const PICKUP_STEPS = [
+  { key: 'pending_pickup',   label: 'Approved',          icon: '✅' },
+  { key: 'picked_up',        label: 'Picked Up',         icon: '📦' },
+  { key: 'packed',           label: 'Packed',            icon: '🗃️' },
+  { key: 'out_for_delivery', label: 'Out for Delivery',  icon: '🚚' },
+  { key: 'delivered',        label: 'Delivered',         icon: '🎉' },
+];
+
+const PickupTracker: React.FC<{ status: string }> = ({ status }) => {
+  const currentIdx = PICKUP_STEPS.findIndex(s => s.key === status);
+  return (
+    <div className="flex items-center gap-1 flex-wrap mt-3">
+      {PICKUP_STEPS.map((step, i) => {
+        const done = i <= currentIdx;
+        const active = i === currentIdx;
+        return (
+          <React.Fragment key={step.key}>
+            <div className="flex flex-col items-center">
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-base border-2 transition-all ${
+                done ? 'bg-green-500 border-green-500 text-white' : 'bg-gray-100 border-gray-300 text-gray-400'
+              } ${active ? 'ring-2 ring-green-300 scale-110' : ''}`}>
+                {done ? step.icon : <span className="text-xs font-bold">{i + 1}</span>}
+              </div>
+              <span className={`text-xs mt-0.5 text-center max-w-[64px] leading-tight ${
+                done ? 'text-green-700 font-semibold' : 'text-gray-400'
+              }`}>{step.label}</span>
+            </div>
+            {i < PICKUP_STEPS.length - 1 && (
+              <div className={`flex-1 h-0.5 min-w-[10px] mb-4 ${i < currentIdx ? 'bg-green-400' : 'bg-gray-200'}`} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
 const DonorDashboard = () => {
   const navigate = useNavigate();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [activeTab, setActiveTab] = useState<"donations" | "alerts">("donations");
+  const [myDonations, setMyDonations] = useState<any[]>([]);
+  const [donationsLoading, setDonationsLoading] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -28,7 +69,27 @@ const DonorDashboard = () => {
   
   const handleDonationAdded = () => {
     setRefreshTrigger(prev => prev + 1);
+    fetchMyDonations(user);
   };
+
+  const fetchMyDonations = async (u: any) => {
+    if (!u) return;
+    setDonationsLoading(true);
+    try {
+      const snap = await getDocs(collection(db, "donations"));
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      const mine = all.filter(d =>
+        d.donorId === u.uid || d.donorId === u.email ||
+        (d.donorEmail && d.donorEmail === u.email) ||
+        (!d.donorId && !d.donorEmail && d.source === "individual")
+      );
+      mine.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setMyDonations(mine);
+    } catch (e) { console.error(e); }
+    setDonationsLoading(false);
+  };
+
+  useEffect(() => { if (user) fetchMyDonations(user); }, [user, refreshTrigger]);
   
   if (loading) {
     return (
@@ -164,21 +225,52 @@ const DonorDashboard = () => {
             </div>
           </div>
 
-          {/* Donation List */}
+          {/* Donation List with Pickup Tracker */}
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20 overflow-hidden">
             <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                  <span className="text-white text-xl">📋</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <span className="text-white text-xl">📋</span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">My Donations</h2>
+                    <p className="text-purple-100 text-sm">Track pickup status</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">My Donations</h2>
-                  <p className="text-purple-100 text-sm">Track your contributions</p>
-                </div>
+                <button onClick={() => fetchMyDonations(user)} className="bg-white/20 text-white px-3 py-1 rounded-lg text-sm hover:bg-white/30">🔄 Refresh</button>
               </div>
             </div>
-            <div className="p-6">
-              <DonationList refreshTrigger={refreshTrigger} user={user} />
+            <div className="p-4 space-y-4 max-h-[600px] overflow-y-auto">
+              {donationsLoading ? (
+                <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div></div>
+              ) : myDonations.length === 0 ? (
+                <div className="text-center py-8 text-gray-500"><div className="text-4xl mb-2">📦</div><p>No donations yet.</p></div>
+              ) : myDonations.map(donation => {
+                const status = donation.deliveryStatus || 'pending_pickup';
+                const statusLabel: Record<string,string> = { pending_pickup:'Pending Pickup', picked_up:'Picked Up', packed:'Packed', out_for_delivery:'Out for Delivery', delivered:'Delivered' };
+                return (
+                  <div key={donation.id} className={`border-2 rounded-xl p-4 ${
+                    donation.status === 'Approved' ? 'border-green-100' :
+                    donation.status === 'Rejected' ? 'border-red-100 bg-red-50' : 'border-gray-100'
+                  }`}>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <div>
+                        <h3 className="font-bold text-gray-800">{donation.medicineName}</h3>
+                        <p className="text-xs text-gray-500">Expiry: {donation.expiryDate} | Qty: {donation.quantity}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          donation.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                          donation.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>{donation.status}</span>
+                        {donation.status === 'Approved' && <span className="text-xs text-blue-600 font-medium">{statusLabel[status] || status}</span>}
+                      </div>
+                    </div>
+                    {donation.status === 'Approved' && <PickupTracker status={status} />}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

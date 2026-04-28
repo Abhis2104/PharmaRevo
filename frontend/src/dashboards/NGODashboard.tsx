@@ -6,6 +6,43 @@ import PassportScanner from "../components/PassportScanner";
 import HealthGapIntelligence from "../components/HealthGapIntelligence";
 import ShortageAlerts from "../components/ShortageAlerts";
 
+const DROP_STEPS = [
+  { key: 'pending_dispatch',  label: 'Request Approved', icon: '✅' },
+  { key: 'packed',            label: 'Packed',           icon: '🗃️' },
+  { key: 'shipped',           label: 'Shipped',          icon: '📮' },
+  { key: 'out_for_delivery',  label: 'Out for Delivery', icon: '🚚' },
+  { key: 'delivered',         label: 'Delivered',        icon: '🎉' },
+];
+
+const DeliveryTracker: React.FC<{ status: string }> = ({ status }) => {
+  const currentIdx = DROP_STEPS.findIndex(s => s.key === status);
+  return (
+    <div className="flex items-center gap-1 flex-wrap mt-3">
+      {DROP_STEPS.map((step, i) => {
+        const done = i <= currentIdx;
+        const active = i === currentIdx;
+        return (
+          <React.Fragment key={step.key}>
+            <div className="flex flex-col items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition-all ${
+                done ? 'bg-green-500 border-green-500 text-white' : 'bg-gray-100 border-gray-300 text-gray-400'
+              } ${active ? 'ring-2 ring-green-300 scale-110' : ''}`}>
+                {done ? step.icon : <span className="text-xs font-bold">{i+1}</span>}
+              </div>
+              <span className={`text-xs mt-0.5 text-center max-w-[60px] leading-tight ${
+                done ? 'text-green-700 font-semibold' : 'text-gray-400'
+              }`}>{step.label}</span>
+            </div>
+            {i < DROP_STEPS.length - 1 && (
+              <div className={`flex-1 h-0.5 min-w-[8px] mb-4 ${i < currentIdx ? 'bg-green-400' : 'bg-gray-200'}`} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
 const NGODashboard = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [availableMedicines, setAvailableMedicines] = useState<any[]>([]);
@@ -436,36 +473,55 @@ const NGODashboard = () => {
                 🔄 Refresh
               </button>
             </div>
-            <div className="space-y-4">
-              {myRequests.map(request => (
-                <div key={request.id} className="border-2 border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-300">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-                    <div className="flex-1">
-                      <h4 className="font-bold text-gray-800">Request #{request.id.slice(-6)}</h4>
-                      <p className="text-gray-600 text-sm">Date: {new Date(request.requestDate).toLocaleDateString()}</p>
-                      <p className="text-gray-600 text-sm">Total Items: {request.totalItems || request.items?.length || 0}</p>
-                      {request.items?.length > 0 && (
-                        <div className="mt-2">
-                          <p className="font-semibold text-sm text-gray-700 mb-1">Medicines Requested:</p>
-                          <ul className="text-sm text-gray-600 space-y-0.5">
-                            {request.items.map((med: any, index: number) => (
-                              <li key={index}>• {med.medicineName} (Qty: {med.requestedQuantity})</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+            <div className="space-y-6">
+              {myRequests.map(request => {
+                const deliveryStatus = request.deliveryStatus || (request.status === 'Approved' ? 'pending_dispatch' : null);
+                return (
+                  <div key={request.id} className="border-2 border-gray-100 rounded-2xl p-5 hover:shadow-md transition-all bg-white">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-3 mb-3">
+                      <div>
+                        <h4 className="font-bold text-gray-800 text-lg">Request #{request.id.slice(-6)}</h4>
+                        <p className="text-gray-500 text-sm">Submitted: {new Date(request.requestDate).toLocaleDateString()}</p>
+                        <p className="text-gray-500 text-sm">Total Items: {request.totalItems || request.items?.length || 0}</p>
+                      </div>
+                      <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                        request.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        request.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                        request.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>{request.status}</span>
                     </div>
-                    <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                      request.status === "Pending" ? "bg-yellow-100 text-yellow-800" :
-                      request.status === "Approved" ? "bg-green-100 text-green-800" :
-                      request.status === "Delivered" ? "bg-blue-100 text-blue-800" :
-                      "bg-red-100 text-red-800"
-                    }`}>
-                      {request.status}
-                    </span>
+
+                    {/* Medicines list */}
+                    {request.items?.length > 0 && (
+                      <div className="bg-gray-50 rounded-xl p-3 mb-3">
+                        <p className="text-xs font-semibold text-gray-600 mb-2">Medicines Requested:</p>
+                        <div className="space-y-1">
+                          {request.items.map((med: any, idx: number) => (
+                            <div key={idx} className="flex justify-between text-sm">
+                              <span className="text-gray-700">• {med.medicineName}</span>
+                              <span className="text-gray-500 font-medium">Qty: {med.requestedQuantity}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Delivery Tracker — only for approved requests */}
+                    {request.status === 'Approved' && deliveryStatus && (
+                      <div className="border-t pt-3">
+                        <p className="text-xs font-semibold text-gray-500 mb-1">DELIVERY TRACKING</p>
+                        <DeliveryTracker status={deliveryStatus} />
+                        {deliveryStatus === 'delivered' && (
+                          <div className="mt-2 bg-green-50 border border-green-200 rounded-xl px-4 py-2 text-sm text-green-800 font-semibold text-center">
+                            🎉 Medicines Delivered Successfully!
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {myRequests.length === 0 && (
                 <div className="text-center py-12">
                   <div className="text-6xl mb-4">📋</div>
