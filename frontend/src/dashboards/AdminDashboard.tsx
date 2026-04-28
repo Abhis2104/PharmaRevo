@@ -722,15 +722,18 @@ const AdminDashboard = () => {
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold">Medicine Verification</h3>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        >
-          <option value="recent">📅 Most Recent</option>
-          <option value="alphabetical">🔤 Alphabetical</option>
-          <option value="date">📆 By Expiry Date</option>
-        </select>
+        <div className="flex gap-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="recent">📅 Most Recent</option>
+            <option value="alphabetical">🔤 Alphabetical</option>
+            <option value="date">📆 By Expiry Date</option>
+          </select>
+          <button onClick={fetchData} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all">🔄 Refresh</button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -796,15 +799,18 @@ const AdminDashboard = () => {
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold">Pharmacy Stock Verification</h3>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        >
-          <option value="recent">📅 Most Recent</option>
-          <option value="alphabetical">🔤 Alphabetical</option>
-          <option value="date">📆 By Expiry Date</option>
-        </select>
+        <div className="flex gap-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="recent">📅 Most Recent</option>
+            <option value="alphabetical">🔤 Alphabetical</option>
+            <option value="date">📆 By Expiry Date</option>
+          </select>
+          <button onClick={fetchData} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all">🔄 Refresh</button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -876,15 +882,18 @@ const AdminDashboard = () => {
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold">Company Batch Verification</h3>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        >
-          <option value="recent">📅 Most Recent</option>
-          <option value="alphabetical">🔤 Alphabetical</option>
-          <option value="date">📆 By Expiry Date</option>
-        </select>
+        <div className="flex gap-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="recent">📅 Most Recent</option>
+            <option value="alphabetical">🔤 Alphabetical</option>
+            <option value="date">📆 By Expiry Date</option>
+          </select>
+          <button onClick={fetchData} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all">🔄 Refresh</button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -1027,14 +1036,17 @@ const AdminDashboard = () => {
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold">🏥 NGO/Hospital Medicine Requests</h3>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        >
-          <option value="recent">📅 Most Recent</option>
-          <option value="alphabetical">🔤 By Organization</option>
-        </select>
+        <div className="flex gap-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="recent">📅 Most Recent</option>
+            <option value="alphabetical">🔤 By Organization</option>
+          </select>
+          <button onClick={fetchData} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-all">🔄 Refresh</button>
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">

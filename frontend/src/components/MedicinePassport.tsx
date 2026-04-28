@@ -9,6 +9,7 @@ const MedicinePassport = () => {
   const [loading, setLoading] = useState(false);
   const [selectedPassport, setSelectedPassport] = useState<any>(null);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("recent");
 
   useEffect(() => {
     fetchPassports();
@@ -49,7 +50,16 @@ const MedicinePassport = () => {
     }
   };
 
-  const filtered = filterStatus === "all" ? passports : passports.filter(p => p.status === filterStatus);
+  const getSorted = (data: any[]) => {
+    const d = [...data];
+    if (sortBy === "recent") return d.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    if (sortBy === "alphabetical") return d.sort((a, b) => (a.medicineName || "").localeCompare(b.medicineName || ""));
+    if (sortBy === "expiry") return d.sort((a, b) => new Date(a.expiryDate || 0).getTime() - new Date(b.expiryDate || 0).getTime());
+    if (sortBy === "status") return d.sort((a, b) => (a.status || "").localeCompare(b.status || ""));
+    return d;
+  };
+
+  const filtered = getSorted(filterStatus === "all" ? passports : passports.filter(p => p.status === filterStatus));
 
   const passportUrl = (id: string) => `${window.location.origin}/passport/${id}`;
 
@@ -66,8 +76,8 @@ const MedicinePassport = () => {
         ))}
       </div>
 
-      {/* Filter */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/20 shadow-lg flex flex-wrap gap-2">
+      {/* Filter + Sort + Refresh */}
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 border border-white/20 shadow-lg flex flex-wrap gap-2 items-center">
         {["all", "Created", "Verified", "Distributed", "Completed", "Disposed"].map(s => (
           <button
             key={s}
@@ -81,6 +91,19 @@ const MedicinePassport = () => {
             {s === "all" ? "All Passports" : `${getStatusIcon(s)} ${s}`}
           </button>
         ))}
+        <div className="ml-auto flex gap-2">
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+            <option value="recent">📅 Most Recent</option>
+            <option value="alphabetical">🔤 Alphabetical</option>
+            <option value="expiry">📆 By Expiry</option>
+            <option value="status">🔖 By Status</option>
+          </select>
+          <button onClick={fetchPassports} disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all disabled:opacity-50">
+            🔄 Refresh
+          </button>
+        </div>
       </div>
 
       {/* Passport List */}

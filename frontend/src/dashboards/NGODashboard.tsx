@@ -52,6 +52,7 @@ const NGODashboard = () => {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [medicineSortBy, setMedicineSortBy] = useState("recent");
   const [profileData, setProfileData] = useState({
     organizationName: "",
     organizationType: "NGO",
@@ -333,8 +334,19 @@ const NGODashboard = () => {
     </div>
   );
 
-  const filteredMedicines = availableMedicines.filter(medicine =>
-    medicine.medicineName.toLowerCase().includes(searchTerm.toLowerCase())
+  const getSortedMedicines = (data: any[]) => {
+    const d = [...data];
+    if (medicineSortBy === "recent") return d.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    if (medicineSortBy === "alphabetical") return d.sort((a, b) => (a.medicineName || "").localeCompare(b.medicineName || ""));
+    if (medicineSortBy === "expiry") return d.sort((a, b) => new Date(a.expiryDate || 0).getTime() - new Date(b.expiryDate || 0).getTime());
+    if (medicineSortBy === "quantity") return d.sort((a, b) => (b.quantity || 0) - (a.quantity || 0));
+    return d;
+  };
+
+  const filteredMedicines = getSortedMedicines(
+    availableMedicines.filter(medicine =>
+      medicine.medicineName.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
 
   const tabs = [
@@ -358,14 +370,30 @@ const NGODashboard = () => {
       </div>
       
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-white/20 shadow-lg">
-        <div className="mb-6">
+        <div className="flex flex-col md:flex-row gap-3 mb-6">
           <input
             type="text"
             placeholder="Search medicines by name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-lg"
+            className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-lg"
           />
+          <select
+            value={medicineSortBy}
+            onChange={e => setMedicineSortBy(e.target.value)}
+            className="px-3 py-2 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          >
+            <option value="recent">📅 Most Recent</option>
+            <option value="alphabetical">🔤 Alphabetical</option>
+            <option value="expiry">📆 By Expiry Date</option>
+            <option value="quantity">📦 By Quantity</option>
+          </select>
+          <button
+            onClick={() => fetchData(currentUser)}
+            className="px-5 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all"
+          >
+            🔄 Refresh
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
